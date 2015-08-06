@@ -34,5 +34,5 @@ public interface ColumnWorker extends Runnable {
 	public void setLeftExchanger(Exchanger<ArrayList<Double>> left);
 	public void setRightExchanger(Exchanger<ArrayList<Double>> right);
 	public void setValueSum(double sum);
-	
+
 }

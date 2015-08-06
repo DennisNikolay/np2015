@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Observable;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import  gnu.trove.list.array.TDoubleArrayList;
 /**
  * Extend this to implement local ColumnWorker
  * No Implementation of actual run method in this class
@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class ColumnWorkerAbstractImpl extends Observable  implements ColumnWorker{
 
-	private ArrayList<Double> vertexValue;
+	private TDoubleArrayList vertexValue;
 	private int columnIndex;
-	private ArrayList<Double> leftAccValues=new ArrayList<Double>();
-	private ArrayList<Double> rightAccValues=new ArrayList<Double>();
+	private TDoubleArrayList leftAccValues=new ArrayList<Double>();
+	private TDoubleArrayList rightAccValues=new ArrayList<Double>();
 	private double valueSum=0;
 	private AtomicBoolean terminate=new AtomicBoolean(false);
 	private Exchanger<ArrayList<Double>> leftExchanger;
@@ -86,6 +86,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	public void setValueSum(double sum){
 		valueSum=sum;
 	}
+	
 	
 	//Synchronized
 	
