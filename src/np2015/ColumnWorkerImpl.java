@@ -1,9 +1,9 @@
 package np2015;
 
 import gnu.trove.list.array.TDoubleArrayList;
+import impl.GlobalObserver;
 
 import java.util.HashMap;
-import java.util.Observer;
 import java.util.concurrent.Exchanger;
 
 public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
@@ -16,12 +16,12 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 	private int exchangeRight=INITIAL_NUM_ITERATIONS;
 	
 	public ColumnWorkerImpl(HashMap<Integer, Double> initialVertexValues,
-			int column, GraphInfo ginfo, Observer o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
+			int column, GraphInfo ginfo, GlobalObserver o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
 		super(initialVertexValues, column, ginfo, o, el, er);
 	}
 
 	public ColumnWorkerImpl(TDoubleArrayList initialVertexValues,
-			int column, GraphInfo ginfo, Observer o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
+			int column, GraphInfo ginfo, GlobalObserver o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
 		super(initialVertexValues, column, ginfo, o, el, er);
 	}
 	

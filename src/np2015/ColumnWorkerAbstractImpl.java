@@ -1,18 +1,15 @@
 package np2015;
 
 
+import gnu.trove.list.array.TDoubleArrayList;
 import impl.ColumnWorker;
+import impl.GlobalObserver;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-
-import  gnu.trove.list.array.TDoubleArrayList;
 /**
  * Extend this to implement local ColumnWorker
  * No Implementation of actual run method in this class
@@ -43,7 +40,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	 * @param initialVertexValues - make sure keys inserted in order
 	 * @param column
 	 */
-	public ColumnWorkerAbstractImpl(HashMap<Integer, Double> initialVertexValues, int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
+	public ColumnWorkerAbstractImpl(HashMap<Integer, Double> initialVertexValues, int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		//Initialize with Values
 		this(column, ginfo, globalChecker, el, er);
 		for(Entry<Integer,Double> e:initialVertexValues.entrySet()){
@@ -51,12 +48,12 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		}
 	}
 
-	public ColumnWorkerAbstractImpl(TDoubleArrayList initialVertexValues, int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
+	public ColumnWorkerAbstractImpl(TDoubleArrayList initialVertexValues, int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		this(column, ginfo, globalChecker, el, er);
 		vertexValue=initialVertexValues;
 	}
 	
-	public ColumnWorkerAbstractImpl(int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
+	public ColumnWorkerAbstractImpl(int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		columnIndex=column;
 		//Save Rates (Edges)
 		for(int i=0; i<ginfo.height*4; i++){
@@ -78,6 +75,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 			edges.add(ginfo.getRateForTarget(columnIndex, i/4, n));
 		}
 		addObserver(globalChecker);
+		globalChecker.addWorker(this);
 		leftExchanger=el;
 		rightExchanger=er;
 	}

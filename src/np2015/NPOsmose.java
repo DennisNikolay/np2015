@@ -1,18 +1,21 @@
 package np2015;
 
+import impl.GlobalObserver;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Observer;
 
 import com.google.gson.Gson;
 
 public class NPOsmose {
 
 	public static GraphInfo ginfo;
-	public static Observer o;
+	public static GlobalObserver o;
 	public static double epsilon;
+	
+	public static int workersActive = 0;
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Gson gson = new Gson();
@@ -35,4 +38,12 @@ public class NPOsmose {
 		ginfo.write2File("./result.txt", graph);
 	}
 
+	public static synchronized void incrementWorkersActive() {
+		workersActive++;
+	}
+	
+	public static synchronized int getWorkersActive() {
+		return workersActive;
+	}
+	
 }
