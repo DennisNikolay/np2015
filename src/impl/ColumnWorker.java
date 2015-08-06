@@ -1,5 +1,7 @@
 package impl;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.ArrayList;
 import java.util.concurrent.Exchanger;
 
@@ -19,20 +21,20 @@ public interface ColumnWorker extends Runnable {
 	public void terminate();
 	
 	//Not Synchronized
-	public ArrayList<Double> exchangeLeftAccValues();
-	public ArrayList<Double> exchangeRightAccValues();
-	public void addLeftAcc(int y, double value);
-	public void addRightAcc(int y, double value);
+	public TDoubleArrayList exchangeLeftAccValues();
+	public TDoubleArrayList exchangeRightAccValues();
+	public void addLeftAcc(int y, double value, int numIter);
+	public void addRightAcc(int y, double value, int numIter);
 
 		//Standard Getters
-	public ArrayList<Double> getVertexValue();
+	public TDoubleArrayList getVertexValue();
 	public int getColumnIndex();
-	public ArrayList<Double> getLeftAccValues();
-	public ArrayList<Double> getRightAccValues();
+	public TDoubleArrayList getLeftAccValues();
+	public TDoubleArrayList getRightAccValues();
 	public boolean shouldTerminate();
 		//Standard Setters - all other fields are only set in constructor
-	public void setLeftExchanger(Exchanger<ArrayList<Double>> left);
-	public void setRightExchanger(Exchanger<ArrayList<Double>> right);
+	public void setLeftExchanger(Exchanger<TDoubleArrayList> left);
+	public void setRightExchanger(Exchanger<TDoubleArrayList> right);
 	public void setValueSum(double sum);
 
 }

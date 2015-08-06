@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Observer;
 
 import com.google.gson.Gson;
 
 public class NPOsmose {
 
+	public static GraphInfo ginfo;
+	public static Observer o;
+	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Gson gson = new Gson();
 		String json = "";
@@ -24,6 +28,7 @@ public class NPOsmose {
 			System.err.println("You must provide the serialized file as the first argument!");
 		}
 		GraphInfo ginfo = gson.fromJson(json, GraphInfo.class);
+		NPOsmose.ginfo=ginfo;
 		// Your implementation can now access ginfo to read out all important values
 		ImageConvertible graph = null; // <--- you should implement ImageConvertible to write the graph out
 		ginfo.write2File("./result.txt", graph);

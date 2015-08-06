@@ -29,8 +29,9 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	private TDoubleArrayList rightAccValues=new TDoubleArrayList();
 	private double valueSum=0;
 	private AtomicBoolean terminate=new AtomicBoolean(false);
-	private Exchanger<ArrayList<Double>> leftExchanger;
-	private Exchanger<ArrayList<Double>> rightExchanger;
+	private Exchanger<TDoubleArrayList> leftExchanger;
+	private Exchanger<TDoubleArrayList> rightExchanger;
+
 	/**
 	 * Edges encoded by position, 4 per vertex, 0 mod 4 is left, 1 mod 4 is right, 2 mod 4 is top, 3 mod 4 is bottom.
 	 */
@@ -42,11 +43,20 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	 * @param initialVertexValues - make sure keys inserted in order
 	 * @param column
 	 */
-	public ColumnWorkerAbstractImpl(HashMap<Integer, Double> initialVertexValues, int column, GraphInfo ginfo, Observer globalChecker){
+	public ColumnWorkerAbstractImpl(HashMap<Integer, Double> initialVertexValues, int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		//Initialize with Values
+		this(column, ginfo, globalChecker, el, er);
 		for(Entry<Integer,Double> e:initialVertexValues.entrySet()){
 			vertexValue.add(10*e.getKey()+e.getValue());
 		}
+	}
+
+	public ColumnWorkerAbstractImpl(TDoubleArrayList initialVertexValues, int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
+		this(column, ginfo, globalChecker, el, er);
+		vertexValue=initialVertexValues;
+	}
+	
+	public ColumnWorkerAbstractImpl(int column, GraphInfo ginfo, Observer globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		columnIndex=column;
 		//Save Rates (Edges)
 		for(int i=0; i<ginfo.height*4; i++){
@@ -68,27 +78,80 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 			edges.add(ginfo.getRateForTarget(columnIndex, i/4, n));
 		}
 		addObserver(globalChecker);
+		leftExchanger=el;
+		rightExchanger=er;
 	}
 	
-	public ArrayList<Double> exchangeLeftAccValues(){
-		//TODO: Implement this!
+
+	public TDoubleArrayList exchangeLeftAccValues(){
+		if(leftExchanger==null){
+			leftExchanger=new Exchanger<TDoubleArrayList>();
+			Runnable r=new ColumnWorkerImpl(leftAccValues, columnIndex-1, NPOsmose.ginfo, NPOsmose.o, null, leftExchanger);
+			new Thread(r).start();
+			return new TDoubleArrayList();
+		}else{
+			try {
+				return leftExchanger.exchange(leftAccValues);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return null;
 	}
-	public ArrayList<Double> exchangeRightAccValues(){
-		//TODO: Implement this!
+	public TDoubleArrayList exchangeRightAccValues(){
+		if(rightExchanger==null){
+			rightExchanger=new Exchanger<TDoubleArrayList>();
+			Runnable r=new ColumnWorkerImpl(rightAccValues, columnIndex+1, NPOsmose.ginfo, NPOsmose.o, rightExchanger, null);
+			new Thread(r).start();
+			return new TDoubleArrayList();
+		}else{
+			try {
+				return rightExchanger.exchange(rightAccValues);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		return null;
 	}
 	
-	public void addLeftAcc(int y, double value){
-		//TODO: Implement this!
+	public void addLeftAcc(int y, double value, int numIter){
+		addAcc(y, value, numIter, true);
 	}
-	public void addRightAcc(int y, double value){
-		//TODO: Implement this!
+	public void addRightAcc(int y, double value, int numIter){
+		addAcc(y, value, numIter, false);
+	}
+	/**
+	 * TODO: Bad Implementation here
+	 * @param y
+	 * @param value
+	 * @param numIter
+	 * @param left
+	 */
+	private void addAcc(int y, double value, int numIter, boolean left){
+		TDoubleArrayList acc;
+		if(left){
+			acc=leftAccValues;
+		}else{
+			acc=rightAccValues;
+		}
+		for(int i=0; i<acc.size(); i++){
+			double d=acc.get(i);
+			if(getEncodedCoordinate(d)==y){
+				acc.set(i, (d*numIter-1+value)*numIter+y*10);
+				break;
+			}else if(getEncodedCoordinate(d)<y){
+				double[] toAdd={value};
+				acc.add(toAdd, i-1, 1);
+				break;
+			}
+		}
 	}
 
 	//Getters
 	
-	public ArrayList<Double> getVertexValue(){
+	public TDoubleArrayList getVertexValue(){
 		return vertexValue;
 	}
 	
@@ -96,11 +159,11 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		return columnIndex;
 	}
 	
-	public ArrayList<Double> getLeftAccValues(){
+	public TDoubleArrayList getLeftAccValues(){
 		return leftAccValues;
 	}
 	
-	public ArrayList<Double> getRightAccValues(){
+	public TDoubleArrayList getRightAccValues(){
 		return rightAccValues;
 	}
 	
@@ -109,11 +172,15 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	}
 	
 	//Setters
+	public void setVertexValue(TDoubleArrayList newValues){
+		vertexValue=newValues;
+	}
 	
-	public void setLeftExchanger(Exchanger<ArrayList<Double>> left){
+	public void setLeftExchanger(Exchanger<TDoubleArrayList> left){
 		leftExchanger=left;
 	}
-	public void setRightExchanger(Exchanger<ArrayList<Double>> right){
+	
+	public void setRightExchanger(Exchanger<TDoubleArrayList> right){
 		rightExchanger=right;
 	}
 	/**
@@ -159,4 +226,10 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		terminate=new AtomicBoolean(true);
 	}
 
+	public int getEncodedCoordinate(double vertex){
+		return (int) Math.floor((vertex/10));
+	}
+	public double getActualValue(double vertex, int coordinate){
+		return vertex-coordinate*10;
+	}
 }

@@ -1,20 +1,177 @@
 package np2015;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.util.HashMap;
 import java.util.Observer;
+import java.util.concurrent.Exchanger;
 
 public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 
+	static final int INITIAL_NUM_ITERATIONS=300;
+	private int totalIterCounter=0;
+	private int leftIterCounter=0;
+	private int rightIterCounter=0;
+	private int exchangeLeft=INITIAL_NUM_ITERATIONS;
+	private int exchangeRight=INITIAL_NUM_ITERATIONS;
+	
 	public ColumnWorkerImpl(HashMap<Integer, Double> initialVertexValues,
-			int column, GraphInfo ginfo, Observer o) {
-		super(initialVertexValues, column, ginfo, o);
+			int column, GraphInfo ginfo, Observer o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
+		super(initialVertexValues, column, ginfo, o, el, er);
 	}
 
+	public ColumnWorkerImpl(TDoubleArrayList initialVertexValues,
+			int column, GraphInfo ginfo, Observer o, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {
+		super(initialVertexValues, column, ginfo, o, el, er);
+	}
+	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+		TDoubleArrayList left=new TDoubleArrayList();
+		TDoubleArrayList right=new TDoubleArrayList();
+		//Terminate when signaled or Integer.MAX_VALUE iterations done
+		while(!shouldTerminate() && totalIterCounter!=Integer.MAX_VALUE){
+			TDoubleArrayList vertex=this.getVertexValue();
+			double propLastBottom=0;
+			for(int j=0; j<vertex.size(); j++){
+				//Get current Vertex
+				double vertexValue=vertex.get(j);
+				int y=getEncodedCoordinate(vertexValue);
+				vertexValue=getActualValue(vertexValue, y);
+				
+				//If exchanged last iteration, add this to your value
+				if(left.size()!=0){
+					int leftY=getEncodedCoordinate(left.get(0));
+					if(leftY==y){
+						vertexValue=(vertexValue+left.get(0))/2;
+						left.remove(0,1);
+					}
+					if(leftY<y){ //if node propagated to from acc was 0 earlier
+						double[] toAdd={getActualValue(left.get(0), leftY)+leftY*10}; // add new node
+						vertex.add(toAdd, j-1, 1);
+						left.remove(0,1);
+					}
+				}
+				//Same for right
+				if(right.size()!=0){
+					int rightY=getEncodedCoordinate(right.get(0));
+					if(rightY==y){
+						vertexValue=(vertexValue+right.get(0))/2;
+						right.remove(0,1);
+					}
+					if(rightY<y){ //if node propagated to from acc was 0 earlier
+						double[] toAdd={getActualValue(right.get(0), rightY)+rightY*10}; // add new node
+						vertex.add(toAdd, j-1, 1);
+						right.remove(0,1);
+					}
+				}
+				
+				//Calculate Values to be propagated
+				double propagateTop=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Top));
+				double propagateBottom=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Bottom));
+				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));		
+				double propagateRight=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Right));
+					
+				//Propagate Top
+				if(j!=0 && propagateTop!=0){
+					double nodeBack=vertex.get(j-1);
+					int backY=getEncodedCoordinate(nodeBack);
+					if(backY==y-1){ //Check if previous node in array list is wanted vertex
+						vertex.set(j-1, getActualValue(nodeBack, backY)+propagateTop+backY*10); //if so set correct value
+					}else{
+						double[] toAdd={propagateTop+(y-1)*10}; //else add new node
+						vertex.add(toAdd, j-1, 1);
+					}
+					
+				}else if(j==0 && propagateTop==0){ //if added node is at beginning of list
+					double[] toAdd={propagateTop+(y-1)*10}; // add new node
+					vertex.add(toAdd, 0, 1);
+				}
+					
+				//Propagate Left&Right Accumulators
+				addLeftAcc(y, propagateLeft, leftIterCounter);
+				leftIterCounter++;
+				addRightAcc(y, propagateRight, rightIterCounter);
+				rightIterCounter++;	
+				
+				//Calculate new own Value
+				vertex.set(j, vertexValue+propLastBottom-propagateTop-propagateBottom-propagateLeft-propagateRight+y*10);
+					
+				//Propagate Down
+				propLastBottom=propagateBottom;
+				if(j==vertex.size()-1 && propagateBottom!=0){ //check if reached end of array list and have to prop bottom
+					double[] toAdd={propagateBottom+(y+1)*10}; //if so add new node at the end
+					vertex.add(toAdd, vertex.size(), 1);
+				}else if(propagateBottom!=0){ //have to prop bottom?
+					double nodeForward=vertex.get(j+1); 
+					int forwardY=getEncodedCoordinate(nodeForward);
+					if(forwardY!=y+1){ //is next node in list wanted vertex?
+						double[] toAdd={propagateBottom+(y+1)*10}; //if not add new node
+						vertex.add(toAdd, j+1, 1);
+					}else{
+						vertex.set(j-1, getActualValue(nodeForward, forwardY)+propagateBottom+forwardY*10); //if so set correct value
+					}
+				}
+					
+			}
+			//Left Accumulator work
+			boolean addedLeft=false; //needed for the right at the end adding
+			if(left.size()>0){ //All exchanged Acc values should done by now, if not, then they are at the end of vertex list and 0 till now
+				for(double d: left.toArray()){
+					vertex.add(d);
+				}
+				left.remove(0,1);
+				addedLeft=true;
+			}
+			if(leftIterCounter==exchangeLeft){ //should exchange?
+				TDoubleArrayList inflow=exchangeLeftAccValues();
+				double result=0;
+				for(double d: inflow.toArray()){
+					result+=d;
+				}
+				for(double d: getLeftAccValues().toArray()){
+					result-=d;
+				}
+				exchangeLeft=calculateIterations(result);
+				left=inflow;
+				leftIterCounter=0;
+			}
+			
+			//Right Accumulator work
+			//if addedLeft in this turn, better add right next turn
+			if(right.size()>0 && !addedLeft){ //All exchanged Acc values should done by now, if not, then they are at the end of vertex list and 0 till now
+				for(double d: left.toArray()){
+					vertex.add(d);
+				}
+				right.remove(0,1);
+			}
+			if(rightIterCounter==exchangeRight){ //same for right
+				TDoubleArrayList inflow=exchangeRightAccValues();
+				double result=0;
+				for(double d: inflow.toArray()){
+					result+=d;
+				}
+				for(double d: getLeftAccValues().toArray()){
+					result-=d;
+				}
+				exchangeRight=calculateIterations(result);
+				right=inflow;
+				rightIterCounter=0;
+			}
+			//Finished this iteration
+			totalIterCounter++;
+		}
 		
+		
+			
 	}
-
+	
+	
+	private int calculateIterations(double inOut){
+		//TODO: Implement this!
+		
+		return 100;
+	}
+	
 
 }
