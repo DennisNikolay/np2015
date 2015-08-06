@@ -8,7 +8,7 @@ import java.util.concurrent.Exchanger;
 
 public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 
-	static final int INITIAL_NUM_ITERATIONS=300;
+	static final int INITIAL_NUM_ITERATIONS=100;
 	private int totalIterCounter=0;
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
@@ -168,9 +168,13 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 	
 	
 	private int calculateIterations(double inOut){
-		//TODO: Implement this!
-		
-		return 100;
+		inOut=Math.abs(inOut);
+		if(inOut<=NPOsmose.epsilon){
+			setChanged();
+			notifyObservers();
+			return 1;
+		}
+		return (int) Math.min(Math.floor(inOut/NPOsmose.epsilon), 100);
 	}
 	
 

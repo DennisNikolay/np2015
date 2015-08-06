@@ -12,6 +12,7 @@ public class NPOsmose {
 
 	public static GraphInfo ginfo;
 	public static Observer o;
+	public static double epsilon;
 	
 	public static void main(String[] args) throws IOException, InterruptedException {
 		Gson gson = new Gson();
