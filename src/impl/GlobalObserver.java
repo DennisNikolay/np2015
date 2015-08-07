@@ -5,8 +5,6 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import javax.vecmath.Point2d;
-
 import np2015.NPOsmose;
 
 /**
@@ -25,7 +23,7 @@ public class GlobalObserver implements Observer {
 	/**
 	 * Mapping from worker to pair of two double values representing old and current valueSum of one worker.
 	 */
-	private HashMap<ColumnWorker, Point2d> workers = new HashMap<ColumnWorker, Point2d>();
+	private HashMap<ColumnWorker, Double> workers = new HashMap<ColumnWorker, Double>();
 
 	/**
 	 * To be called by every column worker once.
@@ -33,8 +31,7 @@ public class GlobalObserver implements Observer {
 	 * @param worker
 	 */
 	public void addWorker(ColumnWorker worker) {
-		Point2d p = new Point2d(worker.getValueSum(), 0);
-		workers.put(worker, p);
+		workers.put(worker, worker.getValueSum());
 		NPOsmose.incrementWorkersActive();
 	}
 
@@ -45,7 +42,7 @@ public class GlobalObserver implements Observer {
 	public void update(Observable o, Object arg) {
 		// TODO check for data race if multiple threads notify concurrently??
 		// TODO 
-		alreadyFinished++;
+		increment();
 		Set<ColumnWorker> l = workers.keySet();
 		if (checkGlobalConvergence(l)) {
 			
@@ -60,10 +57,19 @@ public class GlobalObserver implements Observer {
 	private boolean checkGlobalConvergence(Set<ColumnWorker> l) {
 		// all threads have converged locally
 		if (NPOsmose.getWorkersActive() == alreadyFinished) {
-			//TODO compare old and new value. and update values.
+			for (ColumnWorker columnWorker : l) {
+				double oldValue = workers.get(columnWorker).doubleValue();
+				if (oldValue - columnWorker.getValueSum() > NPOsmose.epsilon) {
+					return false;
+				}
+			}
 			return true;
 		}
 		return false;
+	}
+	
+	private synchronized void increment(){
+		alreadyFinished++;
 	}
 
 }
