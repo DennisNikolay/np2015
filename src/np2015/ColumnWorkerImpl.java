@@ -107,7 +107,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 					int forwardY=getEncodedCoordinate(nodeForward);
 					if(forwardY!=y+1){ //is next node in list wanted vertex?
 						double[] toAdd={propagateBottom+(y+1)*10}; //if not add new node
-						vertex.add(toAdd, j+1, 1);
+						vertex.insert(j+1,toAdd);
 					}else{
 						vertex.set(j-1, getActualValue(nodeForward, forwardY)+propagateBottom+forwardY*10); //if so set correct value
 					}

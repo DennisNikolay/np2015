@@ -47,6 +47,7 @@ public class NPOsmose {
 		lock.lock();
 		while(!o.allTerminated())
 			condition.await();
+		lock.unlock();
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should implement ImageConvertible to write the graph out
 		ginfo.write2File("./result.txt", graph);
 	}
