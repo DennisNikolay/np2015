@@ -59,7 +59,7 @@ public class NPOsmose {
 		} finally {
 			lock.unlock();
 		}
-		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should
+		ImageConvertible graph = new ImageConvertible(); // <--- you should
 																// implement
 																// ImageConvertible
 																// to write the
