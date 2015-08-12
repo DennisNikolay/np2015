@@ -15,8 +15,7 @@ public class GlobalObserver implements Observer {
 	private boolean allTerminated=false;
 	
 	/**
-	 * The counter which represents the threads which are already terminated
-	 * because of local convergence.
+	 * The counter which represents the threads which already assume local convergence.
 	 */
 	private int alreadyFinished = 0;
 
@@ -26,6 +25,10 @@ public class GlobalObserver implements Observer {
 	 */
 	private HashMap<ColumnWorker, Double> workers = new HashMap<ColumnWorker, Double>();
 
+	public GlobalObserver() {
+		super();
+	}
+	
 	/**
 	 * To be called by every column worker once.
 	 * 
