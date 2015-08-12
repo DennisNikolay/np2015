@@ -18,7 +18,7 @@ public class GlobalObserver implements Observer {
 	 * The counter which represents the threads which are already terminated
 	 * because of local convergence.
 	 */
-	int alreadyFinished = 0;
+	private int alreadyFinished = 0;
 
 	/**
 	 * Mapping from worker to pair of two double values representing old and current valueSum of one worker.
@@ -57,6 +57,7 @@ public class GlobalObserver implements Observer {
 	private boolean checkGlobalConvergence(Set<ColumnWorker> l) {
 		// all threads have converged locally
 		if (NPOsmose.getWorkersActive() == alreadyFinished) {
+			// Compare old with current value considering epsilon.
 			for (ColumnWorker columnWorker : l) {
 				double oldValue = workers.get(columnWorker).doubleValue();
 				if (oldValue - columnWorker.getValueSum() > NPOsmose.epsilon) {
