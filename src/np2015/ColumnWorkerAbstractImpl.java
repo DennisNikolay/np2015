@@ -94,7 +94,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 				e.printStackTrace();
 			}
 		}
-		return new TDoubleArrayList();
+		return null;
 	}
 	public TDoubleArrayList exchangeRightAccValues(){
 		if(rightExchanger==null && !rightAccValues.isEmpty()){
