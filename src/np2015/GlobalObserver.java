@@ -13,8 +13,7 @@ import java.util.Set;
 public class GlobalObserver implements Observer {
 
 	/**
-	 * The counter which represents the threads which are already terminated
-	 * because of local convergence.
+	 * The counter which represents the threads which already assume local convergence.
 	 */
 	private int alreadyFinished = 0;
 
