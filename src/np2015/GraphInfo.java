@@ -11,17 +11,19 @@ public class GraphInfo implements GuardedCommand {
 
 	public final int width;
 	public final int height;
+	public final double epsilon;
+	public final double maxOutflow;
 	private boolean allGuardsAdded = false;
 	public final HashMap<Integer, HashMap<Integer, Double>> column2row2initialValue = new HashMap<>();
-	// guards are simple equations of the form  gx <= x < gX /\ gy <= y < gY  :ax + by + c, where x and y are the coordinates and a, b
-	// and c are fixed constants
 	public final ArrayList<int[]> guards = new ArrayList<>();
 	public final ArrayList<double[]> commands = new ArrayList<>();
 
 	
-	public GraphInfo(final int width, final int height) {
+	public GraphInfo(final int width, final int height, final int epsilon, final double maxOutflow) {
 		this.width = width;
 		this.height = height;
+		this.epsilon = epsilon;
+		this.maxOutflow = maxOutflow;
 	}
 		
 	public void addInitialEntry(int row, int column, double value) {
@@ -99,12 +101,16 @@ public class GraphInfo implements GuardedCommand {
 			int[] guard = guards.get(i);
 			if (guard[0] == where.ordinal() &&
 				guard[1] <= x &&
-				x < guard[2] &&
+				x <= guard[2] &&
 				guard[3] <= y &&
-				y < guard[4]
+				y <= guard[4]
 			    ) {
 				double[] command = commands.get(i);
-				return command[0]*x*y + command[1]*x + command[2]*y + command[3];
+				final double rate = command[0]*x*y + command[1]*x + command[2]*y + command[3];
+				if (maxOutflow != 0.0)
+					return rate/maxOutflow;
+				else
+					return rate;
 			}
 		}
 		return 0;

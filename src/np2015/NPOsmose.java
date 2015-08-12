@@ -32,7 +32,7 @@ public class NPOsmose {
 		GraphInfo ginfo = gson.fromJson(json, GraphInfo.class);
 		NPOsmose.ginfo=ginfo;
 		// Your implementation can now access ginfo to read out all important values
-		ImageConvertible graph = null; // <--- you should implement ImageConvertible to write the graph out
+		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should implement ImageConvertible to write the graph out
 		ginfo.write2File("./result.txt", graph);
 	}
 

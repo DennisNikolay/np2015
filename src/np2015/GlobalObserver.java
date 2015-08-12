@@ -70,5 +70,9 @@ public class GlobalObserver implements Observer {
 	private synchronized void increment(){
 		alreadyFinished++;
 	}
+	
+	public synchronized Set<ColumnWorker> getWorkers() {
+		return workers.keySet();
+	}
 
 }
