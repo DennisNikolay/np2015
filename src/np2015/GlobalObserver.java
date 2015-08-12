@@ -25,6 +25,10 @@ public class GlobalObserver implements Observer {
 	 */
 	private HashMap<ColumnWorker, Double> workers = new HashMap<ColumnWorker, Double>();
 
+	public GlobalObserver() {
+		super();
+	}
+	
 	/**
 	 * To be called by every column worker once.
 	 * 
