@@ -41,6 +41,8 @@ public class NPOsmose {
 		GraphInfo ginfo = gson.fromJson(json, GraphInfo.class);
 		NPOsmose.ginfo=ginfo;
 		// Your implementation can now access ginfo to read out all important values
+		o=new GlobalObserver();
+		
 		Entry<Integer, HashMap<Integer, Double>> e=ginfo.column2row2initialValue.entrySet().iterator().next();
 		ColumnWorkerImpl worker=new ColumnWorkerImpl(e.getValue(), e.getKey(), ginfo, o, null, null);
 		new Thread(worker).start();
