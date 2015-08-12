@@ -80,12 +80,12 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						vertex.set(j-1, getActualValue(nodeBack, backY)+propagateTop+backY*10); //if so set correct value
 					}else{
 						double[] toAdd={propagateTop+(y-1)*10}; //else add new node
-						vertex.add(toAdd, j-1, 1);
+						vertex.insert(j-1, toAdd);
 					}
 					
-				}else if(j==0 && propagateTop==0){ //if added node is at beginning of list
+				}else if(j==0 && propagateTop!=0){ //if added node is at beginning of list
 					double[] toAdd={propagateTop+(y-1)*10}; // add new node
-					vertex.add(toAdd, 0, 1);
+					vertex.insert(0, toAdd);
 				}
 					
 				//Propagate Left&Right Accumulators
@@ -101,7 +101,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 				propLastBottom=propagateBottom;
 				if(j==vertex.size()-1 && propagateBottom!=0){ //check if reached end of array list and have to prop bottom
 					double[] toAdd={propagateBottom+(y+1)*10}; //if so add new node at the end
-					vertex.add(toAdd, vertex.size(), 1);
+					vertex.add(toAdd);
 				}else if(propagateBottom!=0){ //have to prop bottom?
 					double nodeForward=vertex.get(j+1); 
 					int forwardY=getEncodedCoordinate(nodeForward);
@@ -109,7 +109,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						double[] toAdd={propagateBottom+(y+1)*10}; //if not add new node
 						vertex.insert(j+1,toAdd);
 					}else{
-						vertex.set(j-1, getActualValue(nodeForward, forwardY)+propagateBottom+forwardY*10); //if so set correct value
+						vertex.set(j+1, getActualValue(nodeForward, forwardY)+propagateBottom+forwardY*10); //if so set correct value
 					}
 				}
 					
