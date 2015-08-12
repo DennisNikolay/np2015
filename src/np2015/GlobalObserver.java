@@ -57,7 +57,7 @@ public class GlobalObserver implements Observer {
 					columnWorker.terminate();
 				}
 				allTerminated=true;
-				NPOsmose.condition.notify();
+				NPOsmose.condition.signal();
 			}
 		}
 
