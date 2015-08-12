@@ -12,6 +12,8 @@ import java.util.Set;
  */
 public class GlobalObserver implements Observer {
 
+	private boolean allTerminated=false;
+	
 	/**
 	 * The counter which represents the threads which are already terminated
 	 * because of local convergence.
@@ -51,6 +53,8 @@ public class GlobalObserver implements Observer {
 				for (ColumnWorker columnWorker : l) {
 					columnWorker.terminate();
 				}
+				allTerminated=true;
+				NPOsmose.condition.notify();
 			}
 		}
 
@@ -75,4 +79,8 @@ public class GlobalObserver implements Observer {
 		return workers.keySet();
 	}
 
+	public synchronized boolean allTerminated(){
+		return allTerminated;
+	}
+	
 }
