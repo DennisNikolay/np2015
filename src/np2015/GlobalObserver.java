@@ -19,7 +19,8 @@ public class GlobalObserver implements Observer {
 	private int alreadyFinished = 0;
 
 	/**
-	 * Mapping from worker to pair of two double values representing old and current valueSum of one worker.
+	 * Mapping from worker to pair of two double values representing old and
+	 * current valueSum of one worker.
 	 */
 	private HashMap<ColumnWorker, Double> workers = new HashMap<ColumnWorker, Double>();
 
@@ -39,38 +40,37 @@ public class GlobalObserver implements Observer {
 	@Override
 	public void update(Observable o, Object arg) {
 		// TODO check for data race if multiple threads notify concurrently??
-		// TODO 
+		// TODO
 		increment();
-		Set<ColumnWorker> l = workers.keySet();
-		if (checkGlobalConvergence(l)) {
-			
-			// terminate threads
-			for (ColumnWorker columnWorker : l) {
-				columnWorker.terminate();
+
+		if (NPOsmose.getWorkersActive() == alreadyFinished) {
+			// all threads have converged locally
+			Set<ColumnWorker> l = workers.keySet();
+			if (checkGlobalConvergence(l)) {
+				// terminate threads
+				for (ColumnWorker columnWorker : l) {
+					columnWorker.terminate();
+				}
 			}
 		}
 
 	}
 
 	private boolean checkGlobalConvergence(Set<ColumnWorker> l) {
-		// all threads have converged locally
-		if (NPOsmose.getWorkersActive() == alreadyFinished) {
-			// Compare old with current value considering epsilon.
-			for (ColumnWorker columnWorker : l) {
-				double oldValue = workers.get(columnWorker).doubleValue();
-				if (oldValue - columnWorker.getValueSum() > NPOsmose.epsilon) {
-					return false;
-				}
+		// Compare old with current value considering epsilon.
+		for (ColumnWorker columnWorker : l) {
+			double oldValue = workers.get(columnWorker).doubleValue();
+			if (Math.abs(oldValue - columnWorker.getValueSum()) > NPOsmose.epsilon) {
+				return false;
 			}
-			return true;
 		}
-		return false;
+		return true;
 	}
-	
-	private synchronized void increment(){
+
+	private synchronized void increment() {
 		alreadyFinished++;
 	}
-	
+
 	public synchronized Set<ColumnWorker> getWorkers() {
 		return workers.keySet();
 	}
