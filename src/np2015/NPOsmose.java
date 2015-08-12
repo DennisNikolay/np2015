@@ -15,7 +15,7 @@ import com.google.gson.Gson;
 public class NPOsmose {
 
 	public static GraphInfo ginfo;
-	public static GlobalObserver o;
+	public static GlobalObserver o=new GlobalObserver();
 	public static double epsilon;
 	
 	public static int workersActive = 0;
@@ -41,11 +41,10 @@ public class NPOsmose {
 		GraphInfo ginfo = gson.fromJson(json, GraphInfo.class);
 		NPOsmose.ginfo=ginfo;
 		// Your implementation can now access ginfo to read out all important values
-		o=new GlobalObserver();
-		
 		Entry<Integer, HashMap<Integer, Double>> e=ginfo.column2row2initialValue.entrySet().iterator().next();
 		ColumnWorkerImpl worker=new ColumnWorkerImpl(e.getValue(), e.getKey(), ginfo, o, null, null);
 		new Thread(worker).start();
+		lock.lock();
 		while(!o.allTerminated())
 			condition.await();
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should implement ImageConvertible to write the graph out
