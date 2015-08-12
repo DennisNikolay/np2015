@@ -81,12 +81,12 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	
 
 	public TDoubleArrayList exchangeLeftAccValues(){
-		if(leftExchanger==null){
+		if(leftExchanger==null && !leftAccValues.isEmpty()){
 			leftExchanger=new Exchanger<TDoubleArrayList>();
 			Runnable r=new ColumnWorkerImpl(leftAccValues, columnIndex-1, NPOsmose.ginfo, NPOsmose.o, null, leftExchanger);
 			new Thread(r).start();
 			return new TDoubleArrayList();
-		}else{
+		}else if (leftExchanger!=null){
 			try {
 				return leftExchanger.exchange(leftAccValues);
 			} catch (InterruptedException e) {
@@ -94,15 +94,15 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 				e.printStackTrace();
 			}
 		}
-		return null;
+		return new TDoubleArrayList();
 	}
 	public TDoubleArrayList exchangeRightAccValues(){
-		if(rightExchanger==null){
+		if(rightExchanger==null && !rightAccValues.isEmpty()){
 			rightExchanger=new Exchanger<TDoubleArrayList>();
 			Runnable r=new ColumnWorkerImpl(rightAccValues, columnIndex+1, NPOsmose.ginfo, NPOsmose.o, rightExchanger, null);
 			new Thread(r).start();
 			return new TDoubleArrayList();
-		}else{
+		}else if (rightExchanger!=null){
 			try {
 				return rightExchanger.exchange(rightAccValues);
 			} catch (InterruptedException e) {
@@ -110,7 +110,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 				e.printStackTrace();
 			}
 		}
-		return null;
+		return new TDoubleArrayList();
 	}
 	
 	public void addLeftAcc(int y, double value, int numIter){
