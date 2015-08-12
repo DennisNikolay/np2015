@@ -2,8 +2,6 @@ package np2015;
 
 
 import gnu.trove.list.array.TDoubleArrayList;
-import impl.ColumnWorker;
-import impl.GlobalObserver;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -53,6 +51,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		vertexValue=initialVertexValues;
 	}
 	
+	//TODO muss man nicht immer die edges adden? warum überladener constructor?
 	public ColumnWorkerAbstractImpl(int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		columnIndex=column;
 		//Save Rates (Edges)

@@ -1,7 +1,6 @@
 package np2015;
 
 import gnu.trove.list.array.TDoubleArrayList;
-import impl.GlobalObserver;
 
 import java.util.HashMap;
 import java.util.concurrent.Exchanger;
@@ -51,6 +50,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						vertex.add(toAdd, j-1, 1);
 						left.remove(0,1);
 					}
+					//TODO leftY>y ?
 				}
 				//Same for right
 				if(right.size()!=0){

@@ -1,11 +1,9 @@
-package impl;
+package np2015;
 
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
-
-import np2015.NPOsmose;
 
 /**
  * Observing all running threads according to convergence.
