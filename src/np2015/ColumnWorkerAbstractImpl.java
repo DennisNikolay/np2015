@@ -138,12 +138,16 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 			if(getEncodedCoordinate(d)==y){
 				acc.set(i, (d*numIter-1+value)*numIter+y*10);
 				break;
-			}else if(getEncodedCoordinate(d)<y){
+			}else if(getEncodedCoordinate(d)>y){
 				double[] toAdd={value};
-				acc.add(toAdd, i-1, 1);
+				acc.insert(i-1, toAdd);
 				break;
 			}
 		}
+		if(y>=acc.size()){
+			acc.add(value);
+		}
+		
 	}
 
 	//Getters
