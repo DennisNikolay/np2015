@@ -1,5 +1,7 @@
 package np2015;
 
+import gnu.trove.list.array.TDoubleArrayList;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +19,7 @@ public class NPOsmose {
 	public static GraphInfo ginfo;
 	public static GlobalObserver o=new GlobalObserver();
 	public static double epsilon;
+	public static HashMap<Integer, TDoubleArrayList> result=new HashMap<Integer, TDoubleArrayList>();
 	
 	public static int workersActive = 0;
 	
@@ -50,6 +53,7 @@ public class NPOsmose {
 		lock.unlock();
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should implement ImageConvertible to write the graph out
 		ginfo.write2File("./result.txt", graph);
+		ginfo.write2File("/home/dennis/Schreibtisch/result.txt", graph);
 	}
 
 	public static synchronized void incrementWorkersActive() {

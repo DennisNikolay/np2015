@@ -161,7 +161,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 			//Finished this iteration
 			totalIterCounter++;
 		}
-		
+		NPOsmose.result.put(getColumnIndex(), getVertexValue());
 		
 			
 	}
