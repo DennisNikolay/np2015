@@ -112,6 +112,9 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 	}
 
 	public TDoubleArrayList exchangeRightAccValues() {
+		if (getColumnIndex() == NPOsmose.ginfo.width - 1) {
+			return null;
+		}
 		if (rightExchanger == null && !rightAccValues.isEmpty()) {
 			rightExchanger = new Exchanger<TDoubleArrayList>();
 			Runnable r = new ColumnWorkerImpl(rightAccValues, columnIndex + 1,
