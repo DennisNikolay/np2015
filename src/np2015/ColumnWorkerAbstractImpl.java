@@ -42,9 +42,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		//Initialize with Values
 		this(column, ginfo, globalChecker, el, er);
 		for(Entry<Integer,Double> e:initialVertexValues.entrySet()){
-			System.out.println("Row: " + e.getKey() + "\nValue: " + e.getValue() );
 			vertexValues.add(10*e.getKey()+e.getValue());
-			System.out.println(vertexValues.get(0));
 		}
 	}
 
@@ -229,12 +227,12 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	}
 
 	public int getEncodedRowCoordinate(double vertex){
-		int res = ((int)vertex)/10;
-		//System.out.println("Vertex:" + vertex + "\nComputed row:" + res);
+		System.out.println("Init: " + vertex/10);
+		int res = (int) Math.floor((vertex/10));
+		System.out.println("Row: " +res);
 		return res;
 	}
-	
 	public double getActualValue(double vertex, int row){
-		return vertex - row*10;
+		return vertex-row*10;
 	}
 }
