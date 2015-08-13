@@ -57,6 +57,7 @@ public class GlobalObserver implements Observer {
 					columnWorker.terminate();
 				}
 				allTerminated=true;
+				System.out.println("All terminated");
 				NPOsmose.lock.lock();
 				NPOsmose.condition.signal();
 				NPOsmose.lock.unlock();
@@ -86,7 +87,6 @@ public class GlobalObserver implements Observer {
 	}
 
 	public synchronized boolean allTerminated(){
-		System.out.println("all terminated");
 		return allTerminated;
 	}
 	

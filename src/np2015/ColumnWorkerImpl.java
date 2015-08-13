@@ -84,8 +84,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 				if (j != 0 && propagateTop != 0) {
 					double nodeBack = vertex.get(j - 1);
 					int backY = getEncodedRowCoordinate(nodeBack);
-					if (backY == y - 1) { // Check if previous node in array
-											// list is wanted vertex
+					if (backY == y - 1) { // Check if previous node in arraylist is wanted vertex
 						vertex.set(j - 1, getActualValue(nodeBack, backY)
 								+ propagateTop + backY * 10); // if so set
 																// correct value
@@ -111,6 +110,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 				rightIterCounter++;
 
 				// Calculate new own Value
+				
 				vertex.set(j, vertexValue + propLastBottom - propagateTop
 						- propagateBottom - propagateLeft - propagateRight + y
 						* 10);
@@ -137,7 +137,9 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 																	// value
 					}
 				}
-
+				if (getColumnIndex() == 0) {
+//					System.out.println(j + ": " + vertexValue);
+				}
 			}
 			// Left Accumulator work
 			boolean addedLeft = false; // needed for the right at the end adding
@@ -194,6 +196,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 			}
 			// Finished this iteration
 			totalIterCounter++;
+			
 		}
 		NPOsmose.result.put(getColumnIndex(), getVertexValues());
 
@@ -204,7 +207,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 		if (inOut <= NPOsmose.epsilon) {
 			setChanged();
 			notifyObservers();
-			System.out.println("Local convergence detected");
+			
 			return 1;
 		}
 		return (int) Math.min(Math.floor(inOut / NPOsmose.epsilon), 100);

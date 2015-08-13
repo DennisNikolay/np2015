@@ -63,6 +63,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 			GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el,
 			Exchanger<TDoubleArrayList> er) {
 		columnIndex = column;
+		System.out.println("Thread of column " + column + " started.");
 		// Save Rates (Edges)
 		for (int i = 0; i < ginfo.height * 4; i++) {
 			Neighbor n = Neighbor.Left;
