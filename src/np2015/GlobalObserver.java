@@ -34,7 +34,7 @@ public class GlobalObserver implements Observer {
 	 * 
 	 * @param worker
 	 */
-	public void addWorker(ColumnWorker worker) {
+	public synchronized void addWorker(ColumnWorker worker) {
 		workers.put(worker, worker.getValueSum());
 		NPOsmose.incrementWorkersActive();
 	}
@@ -77,7 +77,7 @@ public class GlobalObserver implements Observer {
 		return true;
 	}
 
-	private synchronized void increment() {
+	private void increment() {
 		alreadyFinished++;
 	}
 

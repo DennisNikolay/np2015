@@ -30,17 +30,17 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 		TDoubleArrayList right=new TDoubleArrayList();
 		//Terminate when signaled or Integer.MAX_VALUE iterations done
 		while(!shouldTerminate() && totalIterCounter!=Integer.MAX_VALUE){
-			TDoubleArrayList vertex=this.getVertexValue();
+			TDoubleArrayList vertex=this.getVertexValues();
 			double propLastBottom=0;
 			for(int j=0; j<vertex.size(); j++){
 				//Get current Vertex
 				double vertexValue=vertex.get(j);
-				int y=getEncodedCoordinate(vertexValue);
+				int y=getEncodedRowCoordinate(vertexValue);
 				vertexValue=getActualValue(vertexValue, y);
 				
 				//If exchanged last iteration, add this to your value
 				if(left.size()!=0){
-					int leftY=getEncodedCoordinate(left.get(0));
+					int leftY=getEncodedRowCoordinate(left.get(0)); //TODO j statt 0?
 					if(leftY==y){
 						vertexValue=(vertexValue+left.get(0))/2;
 						left.remove(0,1);
@@ -50,11 +50,10 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						vertex.add(toAdd, j-1, 1);
 						left.remove(0,1);
 					}
-					//TODO leftY>y ?
 				}
 				//Same for right
 				if(right.size()!=0){
-					int rightY=getEncodedCoordinate(right.get(0));
+					int rightY=getEncodedRowCoordinate(right.get(0));
 					if(rightY==y){
 						vertexValue=(vertexValue+right.get(0))/2;
 						right.remove(0,1);
@@ -65,18 +64,22 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						right.remove(0,1);
 					}
 				}
-				
 				//Calculate Values to be propagated
 				double propagateTop=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Top));
 				double propagateBottom=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Bottom));
 				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));		
+<<<<<<< HEAD
 				double rateRight=getRateForTarget(getColumnIndex(),y,Neighbor.Right);
 				double propagateRight=(vertexValue*rateRight);
 					
+=======
+				double propagateRight=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Right));
+	
+>>>>>>> af45b1a12b2fd0b361d8c3cc88335e1fdd2600e9
 				//Propagate Top
 				if(j!=0 && propagateTop!=0){
 					double nodeBack=vertex.get(j-1);
-					int backY=getEncodedCoordinate(nodeBack);
+					int backY=getEncodedRowCoordinate(nodeBack);
 					if(backY==y-1){ //Check if previous node in array list is wanted vertex
 						vertex.set(j-1, getActualValue(nodeBack, backY)+propagateTop+backY*10); //if so set correct value
 					}else{
@@ -105,7 +108,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 					vertex.add(toAdd);
 				}else if(propagateBottom!=0){ //have to prop bottom?
 					double nodeForward=vertex.get(j+1); 
-					int forwardY=getEncodedCoordinate(nodeForward);
+					int forwardY=getEncodedRowCoordinate(nodeForward);
 					if(forwardY!=y+1){ //is next node in list wanted vertex?
 						double[] toAdd={propagateBottom+(y+1)*10}; //if not add new node
 						vertex.insert(j+1,toAdd);
@@ -162,7 +165,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 			//Finished this iteration
 			totalIterCounter++;
 		}
-		NPOsmose.result.put(getColumnIndex(), getVertexValue());
+		NPOsmose.result.put(getColumnIndex(), getVertexValues());
 		
 			
 	}

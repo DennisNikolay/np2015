@@ -134,8 +134,13 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		}
 		for(int i=0; i<acc.size(); i++){
 			double d=acc.get(i);
+<<<<<<< HEAD
 			if(getEncodedCoordinate(d)==y){
-				acc.set(i, (d*(numIter-1)+value)/numIter+y*10);
+				acc.set(i, (d*(numIter-1)+value+y*10)/numIter);
+=======
+			if(getEncodedRowCoordinate(d)==y){
+				acc.set(i, (d*numIter-1+value)*numIter+y*10);
+>>>>>>> af45b1a12b2fd0b361d8c3cc88335e1fdd2600e9
 				break;
 			}else if(getEncodedRowCoordinate(d)>y){
 				double[] toAdd={value};
