@@ -73,15 +73,11 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 					}
 				}
 				// Calculate Values to be propagated
-				double propagateTop = (vertexValue * getRateForTarget(
-						getColumnIndex(), y, Neighbor.Top));
-				double propagateBottom = (vertexValue * getRateForTarget(
-						getColumnIndex(), y, Neighbor.Bottom));
-				double propagateLeft = (vertexValue * getRateForTarget(
-						getColumnIndex(), y, Neighbor.Left));
+				double propagateTop = (vertexValue * getRateForTarget(getColumnIndex(), y, Neighbor.Top));
+				double propagateBottom = (vertexValue * getRateForTarget(getColumnIndex(), y, Neighbor.Bottom));
+				double propagateLeft = (vertexValue * getRateForTarget(getColumnIndex(), y, Neighbor.Left));
 
-				double rateRight = getRateForTarget(getColumnIndex(), y,
-						Neighbor.Right);
+				double rateRight = getRateForTarget(getColumnIndex(), y, Neighbor.Right);
 				double propagateRight = (vertexValue * rateRight);
 
 				// Propagate Top
@@ -173,11 +169,9 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 
 			// Right Accumulator work
 			// if addedLeft in this turn, better add right next turn
-			if (right.size() > 0 && !addedLeft) { // All exchanged Acc values
-													// should done by now, if
-													// not, then they are at the
-													// end of vertex list and 0
-													// till now
+			if (right.size() > 0 && !addedLeft) {
+				// All exchanged Acc values should done by now, if not, then they are at the
+				// end of vertex list and 0 till now
 				for (double d : left.toArray()) {
 					vertex.add(d);
 				}
@@ -185,16 +179,18 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 			}
 			if (rightIterCounter == exchangeRight) { // same for right
 				TDoubleArrayList inflow = exchangeRightAccValues();
-				double result = 0;
-				for (double d : inflow.toArray()) {
-					result += d;
-				}
-				for (double d : getLeftAccValues().toArray()) {
-					result -= d;
-				}
+				if (inflow != null) {
+					double result = 0;
+					for (double d : inflow.toArray()) {
+						result += d;
+					}
+					for (double d : getLeftAccValues().toArray()) {
+						result -= d;
+					}
 				exchangeRight = calculateIterations(result);
 				right = inflow;
 				rightIterCounter = 0;
+				}
 			}
 			// Finished this iteration
 			totalIterCounter++;

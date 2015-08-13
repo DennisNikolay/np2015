@@ -86,6 +86,7 @@ public class GlobalObserver implements Observer {
 	}
 
 	public synchronized boolean allTerminated(){
+		System.out.println("all terminated");
 		return allTerminated;
 	}
 	
