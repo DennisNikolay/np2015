@@ -50,7 +50,6 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						vertex.add(toAdd, j-1, 1);
 						left.remove(0,1);
 					}
-					//TODO leftY>y ?
 				}
 				//Same for right
 				if(right.size()!=0){
@@ -65,13 +64,12 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 						right.remove(0,1);
 					}
 				}
-				
 				//Calculate Values to be propagated
 				double propagateTop=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Top));
 				double propagateBottom=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Bottom));
 				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));		
 				double propagateRight=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Right));
-					
+	
 				//Propagate Top
 				if(j!=0 && propagateTop!=0){
 					double nodeBack=vertex.get(j-1);

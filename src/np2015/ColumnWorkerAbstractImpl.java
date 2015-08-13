@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ColumnWorkerAbstractImpl extends Observable  implements ColumnWorker, GuardedCommand{
 
 	private TDoubleArrayList vertexValues=new TDoubleArrayList();
-	private int columnIndex;
+	private final int columnIndex;
 	private TDoubleArrayList leftAccValues=new TDoubleArrayList();
 	private TDoubleArrayList rightAccValues=new TDoubleArrayList();
 	private double valueSum=0;
@@ -80,7 +80,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	
 
 	public TDoubleArrayList exchangeLeftAccValues(){
-		if(leftExchanger==null && !leftAccValues.isEmpty()){
+		if(getColumnIndex() != 0 && leftExchanger==null && !leftAccValues.isEmpty()){
 			leftExchanger=new Exchanger<TDoubleArrayList>();
 			Runnable r=new ColumnWorkerImpl(leftAccValues, columnIndex-1, NPOsmose.ginfo, NPOsmose.o, null, leftExchanger);
 			new Thread(r).start();
