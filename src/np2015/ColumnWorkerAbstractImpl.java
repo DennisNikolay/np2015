@@ -227,11 +227,9 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	}
 
 	public int getEncodedRowCoordinate(double vertex){
-		System.out.println("Init: " + vertex/10);
-		int res = (int) Math.floor((vertex/10));
-		System.out.println("Row: " +res);
-		return res;
+		return (int) Math.floor(vertex/10);
 	}
+	
 	public double getActualValue(double vertex, int row){
 		return vertex-row*10;
 	}
