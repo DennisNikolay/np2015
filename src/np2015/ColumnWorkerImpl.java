@@ -121,37 +121,18 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 
 				// Propagate Down
 				propLastBottom = propagateBottom;
-				if (j == vertex.size() - 1 && propagateBottom != 0) { // check
-																		// if
-																		// reached
-																		// end
-																		// of
-																		// array
-																		// list
-																		// and
-																		// have
-																		// to
-																		// prop
-																		// bottom
-					double[] toAdd = { propagateBottom + (y + 1) * 10 }; // if
-																			// so
-																			// add
-																			// new
-																			// node
-																			// at
-																			// the
-																			// end
+				// check if reached end of array list and have to prop bottom
+				if (j == vertex.size() - 1 && propagateBottom != 0) {
+					// add node
+					double[] toAdd = { propagateBottom + (y + 1) * 10 }; 
 					vertex.add(toAdd);
 				} else if (propagateBottom != 0) { // have to prop bottom?
 					double nodeForward = vertex.get(j + 1);
 					int forwardY = getEncodedRowCoordinate(nodeForward);
-					if (forwardY != y + 1) { // is next node in list wanted
-												// vertex?
-						double[] toAdd = { propagateBottom + (y + 1) * 10 }; // if
-																				// not
-																				// add
-																				// new
-																				// node
+					// is next node in list wanted vertex
+					if (forwardY != y + 1) {
+						// if not add new node
+						double[] toAdd = { propagateBottom + (y + 1) * 10 };
 						vertex.insert(j + 1, toAdd);
 					} else {
 						vertex.set(j + 1, getActualValue(nodeForward, forwardY)
@@ -227,6 +208,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 		if (inOut <= NPOsmose.epsilon) {
 			setChanged();
 			notifyObservers();
+			System.out.println("Local convergence detected");
 			return 1;
 		}
 		return (int) Math.min(Math.floor(inOut / NPOsmose.epsilon), 100);
