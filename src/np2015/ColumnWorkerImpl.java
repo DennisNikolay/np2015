@@ -70,7 +70,8 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 				double propagateTop=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Top));
 				double propagateBottom=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Bottom));
 				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));		
-				double propagateRight=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Right));
+				double rateRight=getRateForTarget(getColumnIndex(),y,Neighbor.Right);
+				double propagateRight=(vertexValue*rateRight);
 					
 				//Propagate Top
 				if(j!=0 && propagateTop!=0){
