@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public abstract class ColumnWorkerAbstractImpl extends Observable  implements ColumnWorker, GuardedCommand{
 
-	private TDoubleArrayList vertexValue=new TDoubleArrayList();
+	private TDoubleArrayList vertexValues=new TDoubleArrayList();
 	private int columnIndex;
 	private TDoubleArrayList leftAccValues=new TDoubleArrayList();
 	private TDoubleArrayList rightAccValues=new TDoubleArrayList();
@@ -42,16 +42,17 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		//Initialize with Values
 		this(column, ginfo, globalChecker, el, er);
 		for(Entry<Integer,Double> e:initialVertexValues.entrySet()){
-			vertexValue.add(10*e.getKey()+e.getValue());
+			System.out.println("Row: " + e.getKey() + "\nValue: " + e.getValue() );
+			vertexValues.add(10*e.getKey()+e.getValue());
+			System.out.println(vertexValues.get(0));
 		}
 	}
 
 	public ColumnWorkerAbstractImpl(TDoubleArrayList initialVertexValues, int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		this(column, ginfo, globalChecker, el, er);
-		vertexValue=initialVertexValues;
+		vertexValues=initialVertexValues;
 	}
 	
-	//TODO muss man nicht immer die edges adden? warum überladener constructor?
 	public ColumnWorkerAbstractImpl(int column, GraphInfo ginfo, GlobalObserver globalChecker, Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er){
 		columnIndex=column;
 		//Save Rates (Edges)
@@ -135,10 +136,10 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		}
 		for(int i=0; i<acc.size(); i++){
 			double d=acc.get(i);
-			if(getEncodedCoordinate(d)==y){
+			if(getEncodedRowCoordinate(d)==y){
 				acc.set(i, (d*numIter-1+value)*numIter+y*10);
 				break;
-			}else if(getEncodedCoordinate(d)>y){
+			}else if(getEncodedRowCoordinate(d)>y){
 				double[] toAdd={value};
 				acc.insert(i-1, toAdd);
 				break;
@@ -152,8 +153,8 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 
 	//Getters
 	
-	public TDoubleArrayList getVertexValue(){
-		return vertexValue;
+	public TDoubleArrayList getVertexValues(){
+		return vertexValues;
 	}
 	
 	public int getColumnIndex(){
@@ -174,7 +175,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 	
 	//Setters
 	public void setVertexValue(TDoubleArrayList newValues){
-		vertexValue=newValues;
+		vertexValues=newValues;
 	}
 	
 	public void setLeftExchanger(Exchanger<TDoubleArrayList> left){
@@ -227,10 +228,13 @@ public abstract class ColumnWorkerAbstractImpl extends Observable  implements Co
 		terminate=new AtomicBoolean(true);
 	}
 
-	public int getEncodedCoordinate(double vertex){
-		return (int) Math.floor((vertex/10));
+	public int getEncodedRowCoordinate(double vertex){
+		int res = ((int)vertex)/10;
+		//System.out.println("Vertex:" + vertex + "\nComputed row:" + res);
+		return res;
 	}
-	public double getActualValue(double vertex, int coordinate){
-		return vertex-coordinate*10;
+	
+	public double getActualValue(double vertex, int row){
+		return vertex - row*10;
 	}
 }

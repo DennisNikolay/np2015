@@ -27,7 +27,7 @@ public interface ColumnWorker extends Runnable {
 	public void addRightAcc(int y, double value, int numIter);
 
 		//Standard Getters
-	public TDoubleArrayList getVertexValue();
+	public TDoubleArrayList getVertexValues();
 	public int getColumnIndex();
 	public TDoubleArrayList getLeftAccValues();
 	public TDoubleArrayList getRightAccValues();
