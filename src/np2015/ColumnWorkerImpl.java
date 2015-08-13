@@ -67,15 +67,11 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl{
 				//Calculate Values to be propagated
 				double propagateTop=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Top));
 				double propagateBottom=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Bottom));
-				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));		
-<<<<<<< HEAD
+				double propagateLeft=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Left));	
+				
 				double rateRight=getRateForTarget(getColumnIndex(),y,Neighbor.Right);
 				double propagateRight=(vertexValue*rateRight);
-					
-=======
-				double propagateRight=(vertexValue*getRateForTarget(getColumnIndex(),y,Neighbor.Right));
-	
->>>>>>> af45b1a12b2fd0b361d8c3cc88335e1fdd2600e9
+			
 				//Propagate Top
 				if(j!=0 && propagateTop!=0){
 					double nodeBack=vertex.get(j-1);
