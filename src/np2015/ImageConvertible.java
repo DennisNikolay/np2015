@@ -10,5 +10,4 @@ public interface ImageConvertible {
 	 */
 	public double getValueAt(int column, int row);
 
-	
 }

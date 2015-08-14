@@ -7,7 +7,6 @@ enum Neighbor {
 	Bottom
 }
 
-
 public interface GuardedCommand {
 	double getRateForTarget(final int x, final int y, Neighbor where);
 }

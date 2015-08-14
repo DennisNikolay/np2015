@@ -127,7 +127,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
 				
-				
 				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight+tmpMap.get(iter.key()),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
 				if(columnIndex!=0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
@@ -142,6 +141,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					tmpMap.adjustOrPutValue(iter.key()+1, tmpMap.get(iter.key()+1)+propagateBottom, propagateBottom);
 				}
 			}
+			System.out.println(tmpMap);
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
