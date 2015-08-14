@@ -93,6 +93,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
+		int last=0;
 		while (!shouldTerminate() && totalIterCounter != Integer.MAX_VALUE) {
 			double propLastBottom = 0;
 			TIntDoubleHashMap gotLeft=null;
@@ -132,6 +133,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				if(rightIterCounter==numRight){
 					gotRight=exchangeRightAccValues();
 					rightIterCounter=-1;
+				}
+				last=iter.key();
+			}
+			if(propLastBottom!=0){
+				if(vertex.containsKey(last+1)){
+					vertex.put(last+1, vertex.get(last+1)+propLastBottom);
+				}else{
+					vertex.put(last+1, propLastBottom);
 				}
 			}
 			rightIterCounter++;
@@ -250,6 +259,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			acc=rightAcc;
 		}
 		if(acc.containsKey(y)){
+			//TODO:
 			acc.put(y, (acc.get(y)+value)/2);
 		}else{
 			if(value!=0){
