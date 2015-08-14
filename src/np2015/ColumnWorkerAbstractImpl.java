@@ -162,17 +162,17 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 			double d = acc.get(i);
 			if (getEncodedRowCoordinate(d) == y) {
 				acc.set(i, (((getActualValue(d, y)*(numIter-1))+value)/numIter)+y*10);
-				break;
+				return;
 			} else if (getEncodedRowCoordinate(d) > y) {
 				if(value==0){
 					return;
 				}
 				double[] toAdd = { value+y*10 };
-				acc.insert(i - 1, toAdd);
-				break;
+				acc.insert(i, toAdd);
+				return;
 			}
 		}
-		if (y >= acc.size() && value!=0) {
+		if (y > acc.size() && value!=0) {
 			acc.add(value+y*10);
 		}
 
