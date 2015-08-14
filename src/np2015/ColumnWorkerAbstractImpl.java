@@ -123,7 +123,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 					NPOsmose.ginfo, NPOsmose.o, rightExchanger, null);
 			new Thread(r).start();
 			return new TDoubleArrayList();
-		} else if (rightExchanger != null) {
+		} else if (rightExchanger != null && !rightAccValues.isEmpty()) {
 			try {
 				return rightExchanger.exchange(rightAccValues);
 			} catch (InterruptedException e) {
@@ -161,19 +161,19 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 		for (int i = 0; i < acc.size(); i++) {
 			double d = acc.get(i);
 			if (getEncodedRowCoordinate(d) == y) {
-				acc.set(i, (d * (numIter - 1) + value) / numIter + y * 10);
+				acc.set(i, (((getActualValue(d, y)*(numIter-1))+value)/numIter)+y*10);
 				break;
 			} else if (getEncodedRowCoordinate(d) > y) {
 				if(value==0){
 					return;
 				}
-				double[] toAdd = { value };
+				double[] toAdd = { value+y*10 };
 				acc.insert(i - 1, toAdd);
 				break;
 			}
 		}
 		if (y >= acc.size() && value!=0) {
-			acc.add(value);
+			acc.add(value+y*10);
 		}
 
 	}
