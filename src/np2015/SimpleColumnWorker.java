@@ -56,11 +56,13 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				break;
 			}
 			edges.add(ginfo.getRateForTarget(columnIndex, i / 4, n));
-			addObserver(o);
-     		o.addWorker(this);
-			exchangeLeft = el;
-			exchangeRight = er;
 		}
+		addObserver(o);
+ 		o.addWorker(this);
+		exchangeLeft = el;
+		exchangeRight = er;
+		System.out.println(columnIndex);
+
 	}
 
 	
@@ -127,27 +129,30 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				
 				
 				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight+tmpMap.get(iter.key()),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
-				
-				addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
-				addRightAcc(iter.key(), propagateRight, totalIterCounter);
+				if(columnIndex!=0){
+					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
+				}
+				if(columnIndex!=info.width-1){
+					addRightAcc(iter.key(), propagateRight, totalIterCounter);
+				}
 				if(propagateTop!=0 && iter.key()!=0){
 					tmpMap.adjustOrPutValue(iter.key()-1, tmpMap.get(iter.key()-1)+propagateTop, propagateTop);
 				}
 				if(propagateBottom!=0 && iter.key()!=info.height-1){
 					tmpMap.adjustOrPutValue(iter.key()+1, tmpMap.get(iter.key()+1)+propagateBottom, propagateBottom);
 				}
-				if(leftIterCounter==numLeft){
-					gotLeft=exchangeLeftAccValues();
-					leftIterCounter=-1;
-				}
-				if(rightIterCounter==numRight){
-					gotRight=exchangeRightAccValues();
-					rightIterCounter=-1;
-				}
 			}
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
+			if(leftIterCounter==numLeft){
+				gotLeft=exchangeLeftAccValues();
+				leftIterCounter=0;
+			}
+			if(rightIterCounter==numRight){
+				gotRight=exchangeRightAccValues();
+				rightIterCounter=0;
+			}
 			totalIterCounter++;
 			setValueSum(sum);
 			
