@@ -136,6 +136,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				last=iter.key();
 			}
+			
 			if(propLastBottom!=0){
 				if(vertex.containsKey(last+1)){
 					vertex.put(last+1, vertex.get(last+1)+propLastBottom);
