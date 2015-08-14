@@ -27,6 +27,7 @@ public class ImageConvertibleImpl implements ImageConvertible {
 		}
 	}
 	
+	
 	@Override
 	public double getValueAt(int column, int row) {
 		/*ColumnWorker worker = workers[column];

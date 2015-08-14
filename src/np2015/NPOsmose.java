@@ -26,6 +26,7 @@ public class NPOsmose {
 	public static Lock lock = new ReentrantLock();
 	public static Condition condition = lock.newCondition();
 
+	
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 		Gson gson = new Gson();

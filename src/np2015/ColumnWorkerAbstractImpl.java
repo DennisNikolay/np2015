@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class ColumnWorkerAbstractImpl extends Observable implements
 		ColumnWorker, GuardedCommand {
 
+	
 	private TDoubleArrayList vertexValues = new TDoubleArrayList();
 	private final int columnIndex;
 	private TDoubleArrayList leftAccValues = new TDoubleArrayList();
@@ -100,7 +101,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 						leftExchanger);
 				new Thread(r).start();
 				return new TDoubleArrayList();
-			} else if (leftExchanger != null) {
+			} else if (leftExchanger != null && !leftAccValues.isEmpty()) {
 				try {
 					return leftExchanger.exchange(leftAccValues);
 				} catch (InterruptedException e) {
@@ -151,6 +152,7 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 	 */
 	private void addAcc(int y, double value, int numIter, boolean left) {
 		TDoubleArrayList acc;
+
 		if (left) {
 			acc = leftAccValues;
 		} else {
@@ -162,12 +164,15 @@ public abstract class ColumnWorkerAbstractImpl extends Observable implements
 				acc.set(i, (d * (numIter - 1) + value) / numIter + y * 10);
 				break;
 			} else if (getEncodedRowCoordinate(d) > y) {
+				if(value==0){
+					return;
+				}
 				double[] toAdd = { value };
 				acc.insert(i - 1, toAdd);
 				break;
 			}
 		}
-		if (y >= acc.size()) {
+		if (y >= acc.size() && value!=0) {
 			acc.add(value);
 		}
 

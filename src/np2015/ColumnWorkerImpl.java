@@ -14,6 +14,7 @@ public class ColumnWorkerImpl extends ColumnWorkerAbstractImpl {
 	private int exchangeLeft = INITIAL_NUM_ITERATIONS;
 	private int exchangeRight = INITIAL_NUM_ITERATIONS;
 
+	
 	public ColumnWorkerImpl(HashMap<Integer, Double> initialVertexValues,
 			int column, GraphInfo ginfo, GlobalObserver o,
 			Exchanger<TDoubleArrayList> el, Exchanger<TDoubleArrayList> er) {

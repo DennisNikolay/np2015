@@ -12,6 +12,7 @@ import java.util.Set;
  */
 public class GlobalObserver implements Observer {
 
+	
 	private boolean allTerminated=false;
 	
 	/**

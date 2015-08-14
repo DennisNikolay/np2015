@@ -19,6 +19,7 @@ public class GraphInfo implements GuardedCommand {
 	public final ArrayList<double[]> commands = new ArrayList<>();
 
 	
+	
 	public GraphInfo(final int width, final int height, final int epsilon, final double maxOutflow) {
 		this.width = width;
 		this.height = height;

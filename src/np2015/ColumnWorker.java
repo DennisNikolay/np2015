@@ -13,6 +13,7 @@ import java.util.concurrent.Exchanger;
  */
 public interface ColumnWorker extends Runnable {
 
+	
 	@Override
 	public void run();
 	
