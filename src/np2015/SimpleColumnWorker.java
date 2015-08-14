@@ -2,6 +2,7 @@ package np2015;
 
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.procedure.TDoubleProcedure;
 
@@ -176,11 +177,17 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				Runnable r;
 				if(left){
 					this.exchangeLeft=ex;
-					r = new SimpleColumnWorker(acc, columnIndex-1,
+					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+					accCopy.putAll(acc);
+					acc=new TIntDoubleHashMap();
+					r = new SimpleColumnWorker(accCopy, columnIndex-1,
 							NPOsmose.ginfo, NPOsmose.o, null, ex);
 				}else{
 					this.exchangeRight=ex;
-					r = new SimpleColumnWorker(acc, columnIndex+1,
+					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+					accCopy.putAll(acc);
+					acc=new TIntDoubleHashMap();
+					r = new SimpleColumnWorker(accCopy, columnIndex+1,
 							NPOsmose.ginfo, NPOsmose.o, ex, null);
 				}
 				new Thread(r).start();
@@ -192,7 +199,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						iter.advance();
 						iter.setValue(iter.value()/num);
 					}
-					TIntDoubleHashMap got=ex.exchange(acc);
+					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+					accCopy.putAll(acc);
+					TIntDoubleHashMap got=ex.exchange(accCopy);
+					acc=new TIntDoubleHashMap();
 					calculateIter(acc, got, left);
 					return got;
 				} catch (InterruptedException e) {
