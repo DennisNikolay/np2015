@@ -148,10 +148,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			if(leftIterCounter==numLeft){
 				gotLeft=exchangeLeftAccValues();
 				leftIterCounter=0;
+				leftAcc=new TIntDoubleHashMap();
 			}
 			if(rightIterCounter==numRight){
 				gotRight=exchangeRightAccValues();
 				rightIterCounter=0;
+				rightAcc=new TIntDoubleHashMap();
 			}
 			totalIterCounter++;
 			setValueSum(sum);
@@ -178,6 +180,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
+				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					iter.advance();
+					iter.setValue(iter.value()/num);
+				}
 				ex=new Exchanger<TIntDoubleHashMap>();
 				Runnable r;
 				if(left){
