@@ -165,8 +165,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			ex=exchangeRight;
 			acc=rightAcc;
 		}
-		if(acc!=null && !acc.isEmpty()){
-			if(ex==null){
+		if(ex==null){
+			if(acc!=null && !acc.isEmpty()){
 				ex=new Exchanger<TIntDoubleHashMap>();
 				Runnable r;
 				if(left){
@@ -180,7 +180,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				new Thread(r).start();
 				return new TIntDoubleHashMap();
-			}else{
+			}
+		}else{
 				try {
 					TIntDoubleHashMap got=ex.exchange(acc);
 					calculateIter(acc, got, left);
@@ -189,8 +190,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
 		}
+
 		return null;
 		
 		
@@ -198,10 +199,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
-		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext(); iter.advance()){
+		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
+			iter.advance();
 			result+=iter.value();
 		}
-		for(TIntDoubleIterator iter=other.iterator(); iter.hasNext(); iter.advance()){
+		for(TIntDoubleIterator iter=other.iterator(); iter.hasNext();){
+			iter.advance();
 			result-=iter.value();
 		}
 		if(left){
