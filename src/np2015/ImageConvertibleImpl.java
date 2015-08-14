@@ -1,6 +1,8 @@
 package np2015;
 
+import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -16,12 +18,10 @@ public class ImageConvertibleImpl implements ImageConvertible {
 		for (ColumnWorker columnWorker : workers) {
 			workers[columnWorker.getColumnIndex()] = columnWorker;
 		}*/
-		for(Entry<Integer, TDoubleArrayList> e:NPOsmose.result.entrySet()){
+		for(Entry<Integer, TIntDoubleHashMap> e: NPOsmose.result.entrySet()){
 			HashMap<Integer,Double> tmpMap=new HashMap<Integer, Double>();
-			for(double d: e.getValue().toArray()){
-				int y=(int) Math.floor(d/10);
-				d=d-y*10;
-				tmpMap.put(y,d);
+			for(TIntDoubleIterator iter=e.getValue().iterator(); iter.hasNext(); iter.advance()){
+				tmpMap.put(iter.key(), iter.value());
 			}
 			map.put(e.getKey(), tmpMap);
 		}

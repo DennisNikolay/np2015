@@ -1,6 +1,6 @@
 package np2015;
 
-import gnu.trove.list.array.TDoubleArrayList;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +19,7 @@ public class NPOsmose {
 	public static GraphInfo ginfo;
 	public static GlobalObserver o = new GlobalObserver();
 	public static double epsilon;
-	public static HashMap<Integer, TDoubleArrayList> result=new HashMap<Integer, TDoubleArrayList>();	
+	public static HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
 
 	public static int workersActive = 0;
 
@@ -48,7 +48,7 @@ public class NPOsmose {
 		// Your implementation can now access ginfo to read out all important values
 		Entry<Integer, HashMap<Integer, Double>> e = ginfo.column2row2initialValue
 				.entrySet().iterator().next();
-		ColumnWorkerImpl worker = new ColumnWorkerImpl(e.getValue(),
+		SimpleColumnWorker worker = new SimpleColumnWorker(e.getValue(),
 				e.getKey(), ginfo, o, null, null);
 		new Thread(worker).start();
 		lock.lock();
