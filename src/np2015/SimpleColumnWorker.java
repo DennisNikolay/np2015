@@ -4,6 +4,7 @@ import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
@@ -27,6 +28,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	
 	private int numLeft=100;
 	private int numRight=100;
+	private int last=-1;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(true);
 	
@@ -80,7 +82,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private double getEdge(int y, Neighbor dir){
 		switch(dir){
 		case Left:
-			return edges.get(4*y+0);
+			return edges.get(4*y-1+0);
 		case Right:
 			return edges.get(4*y+1);
 		case Top:
@@ -93,13 +95,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
-		int last=0;
 		while (!shouldTerminate() && totalIterCounter != Integer.MAX_VALUE) {
-			double propLastBottom = 0;
 			TIntDoubleHashMap gotLeft=null;
 			TIntDoubleHashMap gotRight=null;
 			double sum=0;
-			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext();){
+			HashMap<Integer, Double> tmpMap=new HashMap<Integer, Double>();
+			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
 				iter.advance();
 				sum+=iter.value();
 				if(gotLeft!=null && !gotLeft.isEmpty()){
@@ -119,12 +120,21 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				double propagateBottom=iter.value()*getEdge(iter.key(), Neighbor.Bottom);
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
-				iter.setValue(iter.value()+propLastBottom-propagateTop-propagateBottom-propagateLeft-propagateRight);
+				if(propagateBottom!=0 && vertex.containsKey(iter.key()+1)){
+					vertex.adjustValue(iter.key()+1, vertex.get(iter.key()+1)+propagateBottom);
+				}else{
+					tmpMap.put(iter.key()+1, propagateBottom);
+				}
 				
-				propLastBottom=propagateBottom;
+				iter.setValue(iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
+				
 				addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				addRightAcc(iter.key(), propagateRight, totalIterCounter);
-				//vertex.put(iter.key()-1, propagateTop);
+				if(propagateTop!=0 && vertex.containsKey(iter.key()-1)){
+					vertex.adjustValue(iter.key()-1, vertex.get(iter.key()-1)+propagateTop);
+				}else{
+					tmpMap.put(iter.key()-1, propagateTop);
+				}
 				
 				if(leftIterCounter==numLeft){
 					gotLeft=exchangeLeftAccValues();
@@ -136,14 +146,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				last=iter.key();
 			}
-			
-			if(propLastBottom!=0){
-				if(vertex.containsKey(last+1)){
-					vertex.put(last+1, vertex.get(last+1)+propLastBottom);
-				}else{
-					vertex.put(last+1, propLastBottom);
-				}
-			}
+			vertex.putAll(tmpMap);
 			rightIterCounter++;
 			leftIterCounter++;
 			totalIterCounter++;
