@@ -3,6 +3,7 @@ package np2015;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+import gnu.trove.procedure.TDoubleProcedure;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -21,6 +22,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int columnIndex;
 	private TDoubleArrayList edges = new TDoubleArrayList();
 
+	private GraphInfo info;
+	
 	private int totalIterCounter=0;
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
@@ -29,10 +32,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int numRight=100;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(true);
+
 	
 	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
 			Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
 		columnIndex=column;
+		info=ginfo;
 		for (int i = 0; i < ginfo.height * 4; i++) {
 			Neighbor n = Neighbor.Left;
 			switch (i % 4) {
@@ -80,7 +85,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private double getEdge(int y, Neighbor dir){
 		switch(dir){
 		case Left:
-			return edges.get(4*y-1+0);
+			return edges.get(4*y+0);
 		case Right:
 			return edges.get(4*y+1);
 		case Top:
@@ -124,10 +129,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				
 				addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				addRightAcc(iter.key(), propagateRight, totalIterCounter);
-				if(propagateTop!=0){
+				if(propagateTop!=0 && iter.key()!=0){
 					tmpMap.adjustOrPutValue(iter.key()-1, tmpMap.get(iter.key()-1)+propagateTop, propagateTop);
 				}
-				if(propagateBottom!=0){
+				if(propagateBottom!=0 && iter.key()!=info.height-1){
 					tmpMap.adjustOrPutValue(iter.key()+1, tmpMap.get(iter.key()+1)+propagateBottom, propagateBottom);
 				}
 				if(leftIterCounter==numLeft){
@@ -155,12 +160,15 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private TIntDoubleHashMap exchangeAcc(boolean left){
 		Exchanger<TIntDoubleHashMap> ex;
 		TIntDoubleHashMap acc;
+		int num;
 		if(left){
 			ex=exchangeLeft;
 			acc=leftAcc;
+			num=numLeft;
 		}else{
 			ex=exchangeRight;
 			acc=rightAcc;
+			num=numRight;
 		}
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
@@ -180,6 +188,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			}
 		}else{
 				try {
+					for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+						iter.advance();
+						iter.setValue(iter.value()/num);
+					}
 					TIntDoubleHashMap got=ex.exchange(acc);
 					calculateIter(acc, got, left);
 					return got;
@@ -260,7 +272,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 		if(acc.containsKey(y)){
 			//TODO:
-			acc.put(y, (acc.get(y)+value)/2);
+			acc.put(y, acc.get(y)+value);
 		}else{
 			if(value!=0){
 				acc.put(y, value);
