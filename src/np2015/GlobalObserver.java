@@ -45,8 +45,9 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		
-		if (!workers.containsKey(((SimpleColumnWorker)o).getColumnIndex() )) {
+		// TODO check for data race if multiple threads notify concurrently??
+		// TODO
+		if (!workers.containsKey((SimpleColumnWorker) o )) {
 			increment();
 			System.out.println("not in");
 		}
