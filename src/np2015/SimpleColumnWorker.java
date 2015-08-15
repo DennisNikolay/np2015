@@ -101,7 +101,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
  		NPOsmose.o.addThread(Thread.currentThread());
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
-		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
+		while (!shouldTerminate() && !Thread.currentThread().isInterrupted() && totalIterCounter != Integer.MAX_VALUE) {
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -142,12 +142,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
-			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.interrupted()){
+			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
 				gotLeft=exchangeLeftAccValues();
 				leftIterCounter=0;
 				leftAcc=new TIntDoubleHashMap();
 			}
-			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.interrupted()){
+			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
 				gotRight=exchangeRightAccValues();
 				rightIterCounter=0;
 				rightAcc=new TIntDoubleHashMap();
@@ -240,6 +240,19 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
+		if(left){
+			if(numLeft==1){
+				setChanged();
+				notifyObservers();
+				return;
+			}
+		}else{
+			if(numRight==1){
+				setChanged();
+				notifyObservers();
+				return;
+			}
+		}
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
 			iter.advance();
 			result+=iter.value();
@@ -279,13 +292,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 	}
 	
-	public double getValueSum() {
-		/*double result=0;
-		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); i.advance()){
+	synchronized public double getValueSum() {
+		double result=0;
+		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); ){
+			i.advance();
 			result+=i.value();
 		}
-		return result;*/
-		return valueSum;
+		return result;
+		//return valueSum;
 	}
 
 	public void terminate() {
@@ -366,7 +380,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	
-	public void setValueSum(double sum) {
+	synchronized public void setValueSum(double sum) {
 		this.valueSum=sum;
 	}
 
