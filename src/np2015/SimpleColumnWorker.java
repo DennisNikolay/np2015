@@ -2,10 +2,7 @@ package np2015;
 
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
-import gnu.trove.map.hash.TDoubleIntHashMap;
 import gnu.trove.map.hash.TIntDoubleHashMap;
-import gnu.trove.procedure.TDoubleProcedure;
-
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
@@ -61,7 +58,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
  		o.addWorker(this);
 		exchangeLeft = el;
 		exchangeRight = er;
-		System.out.println(columnIndex);
 
 	}
 
@@ -141,7 +137,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					tmpMap.adjustOrPutValue(iter.key()+1, propagateBottom, propagateBottom);
 				}
 			}
-			System.out.println(tmpMap);
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
@@ -203,6 +198,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				new Thread(r).start();
 				return new TIntDoubleHashMap();
+			}else{
+				if(left){
+					numLeft=1;
+				}else{
+					numRight=1;
+				}
 			}
 		}else{
 				try {

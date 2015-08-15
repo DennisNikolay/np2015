@@ -48,7 +48,6 @@ public class GlobalObserver implements Observer {
 		// TODO check for data race if multiple threads notify concurrently??
 		// TODO
 		increment();
-
 		if (NPOsmose.getWorkersActive() == alreadyFinished) {
 			// all threads have converged locally
 			Set<SimpleColumnWorker> l = workers.keySet();

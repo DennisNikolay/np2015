@@ -18,7 +18,7 @@ public class NPOsmose {
 
 	public static GraphInfo ginfo;
 	public static GlobalObserver o = new GlobalObserver();
-	public static double epsilon;
+	public static double epsilon=0.1;
 	public static HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
 
 	public static int workersActive = 0;
