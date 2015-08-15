@@ -27,8 +27,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
 	
-	private int numLeft=100;
-	private int numRight=100;
+	private int numLeft=1;
+	private int numRight=1;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(false);
 
@@ -99,9 +99,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	public void run() {
  		NPOsmose.o.addThread(Thread.currentThread());
+		TIntDoubleHashMap gotLeft=null;
+		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			TIntDoubleHashMap gotLeft=null;
-			TIntDoubleHashMap gotRight=null;
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -153,12 +153,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				rightAcc=new TIntDoubleHashMap();
 			}
 			totalIterCounter++;
+			NPOsmose.total++;
+			//System.out.println(NPOsmose.total);
 			setValueSum(sum);
 			
 		}
 		NPOsmose.result.put(getColumnIndex(), getVertexValues());
-
-		System.out.println("Thread " + getColumnIndex() + " has terminated.");
 
 
 	}

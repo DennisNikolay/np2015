@@ -30,6 +30,8 @@ public class NPOsmose {
 	public static Condition condition = lock.newCondition();
 	public static LinkedList<Thread> threads=new LinkedList<Thread>();
 
+	public static int total=0;
+	
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 		Gson gson = new Gson();
@@ -60,7 +62,6 @@ public class NPOsmose {
 				condition.await();
 		} finally {
 			lock.unlock();
-			System.out.println(Thread.activeCount());
 		}
 		for(Thread t: threads){
 			t.join();
