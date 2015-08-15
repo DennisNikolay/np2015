@@ -273,7 +273,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void terminate() {
-		terminate.set(true);
+		terminate.set(false);
 	}
 
 	public TIntDoubleHashMap exchangeLeftAccValues() {
