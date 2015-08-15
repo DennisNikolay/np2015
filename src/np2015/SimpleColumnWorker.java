@@ -27,8 +27,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
 	
-	private int numLeft=1;
-	private int numRight=1;
+	private int numLeft=100;
+	private int numRight=100;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(false);
 
