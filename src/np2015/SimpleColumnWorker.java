@@ -31,6 +31,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int numRight=100;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(false);
+	private double oldValueSum;
 
 	
 	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
@@ -157,7 +158,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			setValueSum(sum);
 			
 		}
-		NPOsmose.result.put(getColumnIndex(), getVertexValues());
+		synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
 
 
 	}
@@ -291,7 +292,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 	}
 	
-	public double getValueSum() {
+	synchronized public double getValueSum() {
 		double result=0;
 		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); ){
 			i.advance();
@@ -378,8 +379,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		this.exchangeRight=right;
 	}
 
+	synchronized public double getOldValueSum(){
+		return oldValueSum;
+	}
 	
-	public void setValueSum(double sum) {
+	synchronized public void setValueSum(double sum) {
+		this.oldValueSum=this.getValueSum();
 		this.valueSum=sum;
 	}
 
