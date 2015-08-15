@@ -153,7 +153,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				rightAcc=new TIntDoubleHashMap();
 			}
 			totalIterCounter++;
-			NPOsmose.total++;
 			//System.out.println(NPOsmose.total);
 			setValueSum(sum);
 			
@@ -292,7 +291,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 	}
 	
-	synchronized public double getValueSum() {
+	public double getValueSum() {
 		double result=0;
 		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); ){
 			i.advance();
@@ -380,7 +379,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	
-	synchronized public void setValueSum(double sum) {
+	public void setValueSum(double sum) {
 		this.valueSum=sum;
 	}
 
