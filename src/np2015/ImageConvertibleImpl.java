@@ -20,7 +20,8 @@ public class ImageConvertibleImpl implements ImageConvertible {
 		}*/
 		for(Entry<Integer, TIntDoubleHashMap> e: NPOsmose.result.entrySet()){
 			HashMap<Integer,Double> tmpMap=new HashMap<Integer, Double>();
-			for(TIntDoubleIterator iter=e.getValue().iterator(); iter.hasNext(); iter.advance()){
+			for(TIntDoubleIterator iter=e.getValue().iterator(); iter.hasNext(); ){
+				iter.advance();
 				tmpMap.put(iter.key(), iter.value());
 			}
 			map.put(e.getKey(), tmpMap);
