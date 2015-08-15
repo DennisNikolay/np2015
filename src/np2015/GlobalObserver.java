@@ -1,9 +1,11 @@
 package np2015;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * Observing all running threads according to convergence.
@@ -25,7 +27,8 @@ public class GlobalObserver implements Observer {
 	 * current valueSum of one worker.
 	 */
 	private HashMap<SimpleColumnWorker, Double> workers = new HashMap<SimpleColumnWorker, Double>();
-
+	private LinkedList<Thread> threads=new LinkedList<Thread>();
+	
 	public GlobalObserver() {
 		super();
 	}
@@ -44,7 +47,7 @@ public class GlobalObserver implements Observer {
 	 * Triggered by notifying thread suspecting local convergence.
 	 */
 	@Override
-	public void update(Observable o, Object arg) {
+	public synchronized void update(Observable o, Object arg) {
 		SimpleColumnWorker scw=((SimpleColumnWorker)o);
 		if (!workers.containsKey(scw)) {
 			throw new UnsupportedOperationException();
@@ -64,7 +67,20 @@ public class GlobalObserver implements Observer {
 				// terminate threads
 				for (SimpleColumnWorker columnWorker : l) {
 					columnWorker.terminate();
+					
+					
 				}
+				for(Thread t: threads){
+					t.interrupt();
+					try {
+						if(!t.equals(Thread.currentThread()))
+							t.join();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				
 				allTerminated=true;
 				System.out.println("All terminated");
 				NPOsmose.lock.lock();
@@ -97,6 +113,10 @@ public class GlobalObserver implements Observer {
 
 	public synchronized boolean allTerminated(){
 		return allTerminated;
+	}
+	
+	public synchronized void addThread(Thread t){
+		this.threads.add(t);
 	}
 	
 }

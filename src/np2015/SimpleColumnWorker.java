@@ -6,6 +6,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,7 +30,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int numLeft=100;
 	private int numRight=100;
 	
-	private AtomicBoolean terminate=new AtomicBoolean(true);
+	private AtomicBoolean terminate=new AtomicBoolean(false);
 
 	
 	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
@@ -58,7 +59,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
  		o.addWorker(this);
 		exchangeLeft = el;
 		exchangeRight = er;
-
+		
 	}
 
 	
@@ -97,7 +98,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
-		while (!shouldTerminate() && totalIterCounter != Integer.MAX_VALUE) {
+ 		NPOsmose.o.addThread(Thread.currentThread());
+		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
 			TIntDoubleHashMap gotLeft=null;
 			TIntDoubleHashMap gotRight=null;
 			double sum=0;
@@ -156,11 +158,11 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 		NPOsmose.result.put(getColumnIndex(), getVertexValues());
 
-
 	}
 	
 
 	private TIntDoubleHashMap exchangeAcc(boolean left){
+
 		Exchanger<TIntDoubleHashMap> ex;
 		TIntDoubleHashMap acc;
 		int num;
@@ -213,13 +215,17 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					}
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
-					TIntDoubleHashMap got=ex.exchange(accCopy);
-					acc=new TIntDoubleHashMap();
-					calculateIter(acc, got, left);
-					return got;
+					if(shouldTerminate() || Thread.interrupted()){
+						return new TIntDoubleHashMap();
+					}else{
+						TIntDoubleHashMap got=ex.exchange(accCopy);
+						acc=new TIntDoubleHashMap();
+						calculateIter(acc, got, left);
+						return got;
+					}
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					return new TIntDoubleHashMap();
 				}
 		}
 
@@ -273,7 +279,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void terminate() {
-		terminate.set(false);
+		terminate.set(true);
 	}
 
 	public TIntDoubleHashMap exchangeLeftAccValues() {
@@ -335,7 +341,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	
 	public boolean shouldTerminate() {
-		return !terminate.get();
+		return terminate.get();
 	}
 
 	

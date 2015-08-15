@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,7 +27,6 @@ public class NPOsmose {
 
 	public static Lock lock = new ReentrantLock();
 	public static Condition condition = lock.newCondition();
-
 	
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
@@ -58,6 +59,7 @@ public class NPOsmose {
 		} finally {
 			lock.unlock();
 		}
+
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should
 																// implement
 																// ImageConvertible
