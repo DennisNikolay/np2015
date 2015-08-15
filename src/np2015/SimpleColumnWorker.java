@@ -158,6 +158,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 		NPOsmose.result.put(getColumnIndex(), getVertexValues());
 
+		System.out.println("Thread " + getColumnIndex() + " has terminated.");
+
+
 	}
 	
 

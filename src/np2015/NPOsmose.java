@@ -60,6 +60,7 @@ public class NPOsmose {
 				condition.await();
 		} finally {
 			lock.unlock();
+			System.out.println(Thread.activeCount());
 		}
 		for(Thread t: threads){
 			t.join();
