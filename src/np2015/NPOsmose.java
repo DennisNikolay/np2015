@@ -64,6 +64,7 @@ public class NPOsmose {
 																// to write the
 																// graph out
 		ginfo.write2File("./result.txt", graph);
+		System.out.println("Written Result");
 		//ginfo.write2File("/home/dennis/Schreibtisch/result.txt", graph);
 	}
 
