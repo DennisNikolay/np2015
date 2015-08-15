@@ -36,7 +36,7 @@ public class GlobalObserver implements Observer {
 	 * @param worker
 	 */
 	public synchronized void addWorker(SimpleColumnWorker worker) {
-		workers.put(worker, worker.getValueSum());
+		workers.put(worker, 0.0);
 		NPOsmose.incrementWorkersActive();
 	}
 
@@ -45,13 +45,19 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		
-		if (!workers.containsKey(((SimpleColumnWorker)o).getColumnIndex() )) {
-			increment();
-			System.out.println("not in");
+		SimpleColumnWorker scw=((SimpleColumnWorker)o);
+		if (!workers.containsKey(scw)) {
+			throw new UnsupportedOperationException();
+		}else{
+			workers.put(scw, scw.getValueSum());
 		}
-		
-		if (NPOsmose.getWorkersActive() == alreadyFinished) {
+		boolean b=true;
+		for(Double d: workers.values()){
+			if(d==0){
+				b=false;
+			}
+		}
+		if (b) {
 			// all threads have converged locally
 			Set<SimpleColumnWorker> l = workers.keySet();
 			if (checkGlobalConvergence(l)) {
