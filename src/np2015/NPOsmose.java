@@ -57,6 +57,7 @@ public class NPOsmose {
 				condition.await();
 		} finally {
 			lock.unlock();
+			System.out.println(Thread.activeCount());
 		}
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should
 																// implement
