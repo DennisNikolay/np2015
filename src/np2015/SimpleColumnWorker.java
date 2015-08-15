@@ -127,18 +127,18 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
 				
-				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight+tmpMap.get(iter.key()),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
-				if(columnIndex!=0){
+				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight,iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
+				if(columnIndex>0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				}
 				if(columnIndex!=info.width-1){
 					addRightAcc(iter.key(), propagateRight, totalIterCounter);
 				}
 				if(propagateTop!=0 && iter.key()!=0){
-					tmpMap.adjustOrPutValue(iter.key()-1, tmpMap.get(iter.key()-1)+propagateTop, propagateTop);
+					tmpMap.adjustOrPutValue(iter.key()-1, propagateTop, propagateTop);
 				}
 				if(propagateBottom!=0 && iter.key()!=info.height-1){
-					tmpMap.adjustOrPutValue(iter.key()+1, tmpMap.get(iter.key()+1)+propagateBottom, propagateBottom);
+					tmpMap.adjustOrPutValue(iter.key()+1, propagateBottom, propagateBottom);
 				}
 			}
 			System.out.println(tmpMap);
