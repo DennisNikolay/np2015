@@ -47,6 +47,7 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public synchronized void update(Observable o, Object arg) {
+		double oldValue;
 		if(Thread.interrupted()){
 			return;
 		}
@@ -54,6 +55,7 @@ public class GlobalObserver implements Observer {
 		if (!workers.containsKey(scw)) {
 			throw new UnsupportedOperationException();
 		}else{
+			oldValue = workers.get(scw);
 			workers.put(scw, scw.getValueSum());
 		}
 		boolean b=true;
@@ -65,7 +67,7 @@ public class GlobalObserver implements Observer {
 		if (b) {
 			// all threads have converged locally
 			Set<SimpleColumnWorker> l = workers.keySet();
-			if (checkGlobalConvergence(l)) {
+			if (checkGlobalConvergence(l, oldValue)) {
 				// terminate threads
 				for (SimpleColumnWorker columnWorker : l) {
 					columnWorker.terminate();
@@ -87,10 +89,9 @@ public class GlobalObserver implements Observer {
 
 	}
 
-	private boolean checkGlobalConvergence(Set<SimpleColumnWorker> l) {
+	private boolean checkGlobalConvergence(Set<SimpleColumnWorker> l, double oldValue) {
 		// Compare old with current value considering epsilon.
 		for (SimpleColumnWorker columnWorker : l) {
-			double oldValue = workers.get(columnWorker).doubleValue();
 			if (Math.abs(oldValue - columnWorker.getValueSum()) > NPOsmose.epsilon) {
 				return false;
 			}
