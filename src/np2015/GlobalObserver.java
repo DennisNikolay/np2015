@@ -45,9 +45,12 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public void update(Observable o, Object arg) {
-		// TODO check for data race if multiple threads notify concurrently??
-		// TODO
-		increment();
+		
+		if (!workers.containsKey(((SimpleColumnWorker)o).getColumnIndex() )) {
+			increment();
+			System.out.println("not in");
+		}
+		
 		if (NPOsmose.getWorkersActive() == alreadyFinished) {
 			// all threads have converged locally
 			Set<SimpleColumnWorker> l = workers.keySet();
@@ -78,7 +81,7 @@ public class GlobalObserver implements Observer {
 		return true;
 	}
 
-	private void increment() {
+	private synchronized void increment() {
 		alreadyFinished++;
 	}
 
