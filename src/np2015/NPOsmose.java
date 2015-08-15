@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -27,7 +28,8 @@ public class NPOsmose {
 
 	public static Lock lock = new ReentrantLock();
 	public static Condition condition = lock.newCondition();
-	
+	public static LinkedList<Thread> threads=new LinkedList<Thread>();
+
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 		Gson gson = new Gson();
@@ -59,7 +61,9 @@ public class NPOsmose {
 		} finally {
 			lock.unlock();
 		}
-
+		for(Thread t: threads){
+			t.join();
+		}
 		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should
 																// implement
 																// ImageConvertible

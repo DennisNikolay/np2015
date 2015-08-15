@@ -142,12 +142,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
-			if(leftIterCounter==numLeft){
+			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.interrupted()){
 				gotLeft=exchangeLeftAccValues();
 				leftIterCounter=0;
 				leftAcc=new TIntDoubleHashMap();
 			}
-			if(rightIterCounter==numRight){
+			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.interrupted()){
 				gotRight=exchangeRightAccValues();
 				rightIterCounter=0;
 				rightAcc=new TIntDoubleHashMap();
@@ -225,6 +225,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					}
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
+					//e.printStackTrace();
 					return new TIntDoubleHashMap();
 				}
 		}
@@ -249,6 +250,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			if (result <= NPOsmose.epsilon) {
 				numLeft=1;
 				if(numLeft==1 && numRight==1){
+					if(shouldTerminate() || Thread.interrupted()){
+						return;
+					}
 					setChanged();
 					notifyObservers();
 				}
@@ -260,6 +264,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			if (result <= NPOsmose.epsilon) {
 				numRight=1;
 				if(numLeft==1 && numRight==1){
+					if(shouldTerminate() || Thread.interrupted()){
+						return;
+					}
 					setChanged();
 					notifyObservers();
 				}

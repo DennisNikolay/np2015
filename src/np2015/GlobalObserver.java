@@ -27,7 +27,6 @@ public class GlobalObserver implements Observer {
 	 * current valueSum of one worker.
 	 */
 	private HashMap<SimpleColumnWorker, Double> workers = new HashMap<SimpleColumnWorker, Double>();
-	private LinkedList<Thread> threads=new LinkedList<Thread>();
 	
 	public GlobalObserver() {
 		super();
@@ -48,6 +47,9 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public synchronized void update(Observable o, Object arg) {
+		if(Thread.interrupted()){
+			return;
+		}
 		SimpleColumnWorker scw=((SimpleColumnWorker)o);
 		if (!workers.containsKey(scw)) {
 			throw new UnsupportedOperationException();
@@ -70,19 +72,12 @@ public class GlobalObserver implements Observer {
 					
 					
 				}
-				for(Thread t: threads){
+				for(Thread t: NPOsmose.threads){
 					t.interrupt();
-					try {
-						if(!t.equals(Thread.currentThread()))
-							t.join();
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
 				}
 				
 				allTerminated=true;
-				System.out.println("All terminated");
+				//System.out.println("All terminated");
 				NPOsmose.lock.lock();
 				NPOsmose.condition.signal();
 				NPOsmose.lock.unlock();
@@ -116,7 +111,7 @@ public class GlobalObserver implements Observer {
 	}
 	
 	public synchronized void addThread(Thread t){
-		this.threads.add(t);
+		NPOsmose.threads.add(t);
 	}
 	
 }
