@@ -21,7 +21,7 @@ public class NPOsmose {
 
 	public static GraphInfo ginfo;
 	public static GlobalObserver o = new GlobalObserver();
-	public static double epsilon=0.1;
+	public static double epsilon;
 	public static HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
 
 	public static int workersActive = 0;
@@ -49,7 +49,9 @@ public class NPOsmose {
 		}
 		GraphInfo ginfo = gson.fromJson(json, GraphInfo.class);
 		NPOsmose.ginfo = ginfo;
-		NPOsmose.epsilon=ginfo.epsilon;
+
+		NPOsmose.epsilon = ginfo.epsilon;
+
 		// Your implementation can now access ginfo to read out all important values
 		Entry<Integer, HashMap<Integer, Double>> e = ginfo.column2row2initialValue
 				.entrySet().iterator().next();
