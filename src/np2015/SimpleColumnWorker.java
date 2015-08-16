@@ -219,7 +219,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					return new TIntDoubleHashMap();
 				}else{
 					TIntDoubleHashMap got=ex.exchange(accCopy);
-					calculateIter(acc, got, left);
+					calculateIter(acc, got, iterations, left);
 					acc=new TIntDoubleHashMap();
 					return got;
 				}
@@ -316,6 +316,49 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		return null;
 	}
 */	
+	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, int iterations, boolean left) {
+		double result=0;
+		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
+			iter.advance();
+			result+=iter.value();
+		}
+		for(TIntDoubleIterator iter=other.iterator(); iter.hasNext();){
+			iter.advance();
+			result-=iter.value();
+		}
+		result = Math.abs(result);
+		if (result <= NPOsmose.epsilon) {
+			if (left) {
+				numLeft = 1;
+			} else {
+				numRight = 1;
+			}
+				
+			if(numLeft==1 && numRight==1){
+				if(shouldTerminate() || Thread.interrupted()){
+					return;
+				}
+				setChanged();
+				notifyObservers();
+			}
+			return;
+		}		
+		if (left) {
+			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+		} else {
+			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+		}
+	}
+	
+	private void calculateIterLeft(TIntDoubleHashMap own, TIntDoubleHashMap other) {
+		calculateIter(own, other, numLeft, true);
+	}
+	
+	private void calculateIterRight(TIntDoubleHashMap own, TIntDoubleHashMap other) {
+		calculateIter(own, other, numRight, false);
+	}
+	
+	/*
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
@@ -364,6 +407,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
 		}
 	}
+	*/
 	
 	synchronized public double getValueSum() {
 		double result=0;
