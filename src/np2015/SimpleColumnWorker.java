@@ -99,7 +99,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
- 		NPOsmose.o.addThread(Thread.currentThread());
+ 		synchronized(NPOsmose.class){NPOsmose.o.addThread(Thread.currentThread());}
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.currentThread().isInterrupted() && totalIterCounter != Integer.MAX_VALUE) {
