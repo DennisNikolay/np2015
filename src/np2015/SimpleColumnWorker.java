@@ -3,6 +3,7 @@ package np2015;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
@@ -103,6 +104,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.currentThread().isInterrupted() && totalIterCounter != Integer.MAX_VALUE) {
+			/*if (totalIterCounter % 10000000 == 0) {
+				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
+				ImageConvertible graph = new ImageConvertibleImpl();
+				NPOsmose.ginfo.write2File("./test.txt", graph);
+				System.out.println("new pic");
+			}*/
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -126,7 +133,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
 				
-				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight,iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
+				double newValue = iter.value() - propagateTop - propagateBottom - propagateLeft - propagateRight;
+				tmpMap.adjustOrPutValue(iter.key(), newValue, newValue);
+				
 				if(columnIndex>0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				}
