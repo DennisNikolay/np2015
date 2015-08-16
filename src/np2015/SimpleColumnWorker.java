@@ -391,7 +391,11 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		this.oldValueSum=this.getValueSum();
 		this.valueSum=sum;
 	}
-
-
+	public int getNumLeft(){
+		return numLeft;
+	}
+	public int getNumRight(){
+		return numRight;
+	}
 
 }

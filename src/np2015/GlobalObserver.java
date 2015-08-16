@@ -2,6 +2,7 @@ package np2015;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -26,8 +27,8 @@ public class GlobalObserver implements Observer {
 	 * Mapping from worker to pair of two double values representing old and
 	 * current valueSum of one worker.
 	 */
-	private HashMap<SimpleColumnWorker, Double> workers = new HashMap<SimpleColumnWorker, Double>();
-	private HashMap<SimpleColumnWorker, Double> workersOld = new HashMap<SimpleColumnWorker, Double>();
+	private HashMap<SimpleColumnWorker, Boolean> workers = new HashMap<SimpleColumnWorker, Boolean>();
+	//private HashMap<SimpleColumnWorker, Double> workersOld = new HashMap<SimpleColumnWorker, Double>();
 
 	
 	public GlobalObserver() {
@@ -40,7 +41,7 @@ public class GlobalObserver implements Observer {
 	 * @param worker
 	 */
 	public synchronized void addWorker(SimpleColumnWorker worker) {
-		workers.put(worker, 0.0);
+		workers.put(worker, false);
 		NPOsmose.incrementWorkersActive();
 	}
 
@@ -56,19 +57,20 @@ public class GlobalObserver implements Observer {
 		if (!workers.containsKey(scw)) {
 			throw new UnsupportedOperationException();
 		}else{
-			workersOld.put(scw, workers.get(scw));
-			workers.put(scw, scw.getValueSum());
+			workers.put(scw, true);
 		}
 		boolean b=true;
-		for(Double d: workers.values()){
-			if(d==0){
+		for(Entry<SimpleColumnWorker, Boolean> e: workers.entrySet()){
+			if(e.getValue()==false){
+				System.out.println(e.getKey().getColumnIndex()+" : numLeft -"+e.getKey().getNumLeft()+" ; numRight - "+e.getKey().getNumRight());
 				b=false;
 			}
 		}
 		if (b) {
+			System.out.println(b);
 			// all threads have converged locally
 			Set<SimpleColumnWorker> l = workers.keySet();
-			if (checkGlobalConvergence(l)) {
+			//if (checkGlobalConvergence(l)) {
 				// terminate threads
 				for (SimpleColumnWorker columnWorker : l) {
 					columnWorker.terminate();
@@ -85,7 +87,7 @@ public class GlobalObserver implements Observer {
 				NPOsmose.condition.signal();
 				NPOsmose.lock.unlock();
 
-			}
+			//}
 		}
 
 	}
@@ -93,7 +95,7 @@ public class GlobalObserver implements Observer {
 	private boolean checkGlobalConvergence(Set<SimpleColumnWorker> l) {
 		// Compare old with current value considering epsilon.
 		for (SimpleColumnWorker columnWorker : l) {
-			//System.out.println(Math.abs(workersOld.get(columnWorker) - columnWorker.getValueSum())+" > "+NPOsmose.epsilon);
+			System.out.println(Math.abs(workersOld.get(columnWorker) - columnWorker.getValueSum())+" > "+NPOsmose.epsilon);
 			if (Math.abs(workersOld.get(columnWorker) - columnWorker.getValueSum()) > NPOsmose.epsilon) {
 				return false;
 			}
