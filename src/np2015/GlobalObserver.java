@@ -84,7 +84,6 @@ public class GlobalObserver implements Observer {
 
 	private boolean checkGlobalConvergence(LinkedList<SimpleColumnWorker> l) {
 		// Compare old with current value considering epsilon.
-		System.out.println("HERE");
 		for (SimpleColumnWorker columnWorker : l) {
 			double oldValue = columnWorker.getOldValueSum();
 			if (Math.abs(oldValue - columnWorker.getValueSum()) > NPOsmose.epsilon) {
