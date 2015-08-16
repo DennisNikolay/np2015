@@ -97,18 +97,18 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
- 		NPOsmose.o.addThread(Thread.currentThread());
+		NPOsmose.o.addThread(Thread.currentThread());
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			if (totalIterCounter % 500000 == 0) {
+		/*	if (totalIterCounter % 10000000 == 0) {
 				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
 				ImageConvertible graph = new ImageConvertibleImpl();
 				NPOsmose.ginfo.write2File("./test.txt", graph);
 				System.out.println(columnIndex+": new pic");
-			}else if(totalIterCounter % 1000==0){
+			}else if(totalIterCounter % 1000000==0){
 				System.out.println(totalIterCounter);
-			}
+			}*/
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -262,7 +262,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return;
 					}
 					setChanged();
-					notifyObservers();
+					notifyObservers(columnIndex);
 				}
 				return;
 			}
@@ -280,7 +280,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return;
 					}
 					setChanged();
-					notifyObservers();
+					notifyObservers(columnIndex);
 				}
 				return;
 			}
@@ -354,17 +354,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		return columnIndex;
 	}
 
-	
-	public TIntDoubleHashMap getLeftAccValues() {
-		return leftAcc;
-	}
-
-	
-	public TIntDoubleHashMap getRightAccValues() {
-		return rightAcc;
-	}
-
-	
 	public boolean shouldTerminate() {
 		return terminate.get();
 	}
@@ -385,7 +374,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		return numRight;
 	}
 	
-	public void setVertex(TIntDoubleHashMap v) {
+	private void setVertex(TIntDoubleHashMap v) {
 		oldVertex = vertex;
 		vertex = v;
 	}

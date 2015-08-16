@@ -18,13 +18,15 @@ public class ImageConvertibleImpl implements ImageConvertible {
 		for (ColumnWorker columnWorker : workers) {
 			workers[columnWorker.getColumnIndex()] = columnWorker;
 		}*/
-		for(Entry<Integer, TIntDoubleHashMap> e: NPOsmose.result.entrySet()){
-			HashMap<Integer,Double> tmpMap=new HashMap<Integer, Double>();
-			for(TIntDoubleIterator iter=e.getValue().iterator(); iter.hasNext(); ){
-				iter.advance();
-				tmpMap.put(iter.key(), iter.value());
+		synchronized(NPOsmose.class){
+			for(Entry<Integer, TIntDoubleHashMap> e: NPOsmose.result.entrySet()){
+				HashMap<Integer,Double> tmpMap=new HashMap<Integer, Double>();
+				for(TIntDoubleIterator iter=e.getValue().iterator(); iter.hasNext(); ){
+					iter.advance();
+					tmpMap.put(iter.key(), iter.value());
+				}
+				map.put(e.getKey(), tmpMap);
 			}
-			map.put(e.getKey(), tmpMap);
 		}
 	}
 	

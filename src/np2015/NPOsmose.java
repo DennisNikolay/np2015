@@ -11,10 +11,10 @@ import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import com.google.gson.Gson;
 
 public class NPOsmose {
@@ -32,6 +32,7 @@ public class NPOsmose {
 
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
+		long startTime = System.currentTimeMillis();		
 		Gson gson = new Gson();
 		String json = "";
 		// read data in
@@ -56,6 +57,7 @@ public class NPOsmose {
 				e.getKey(), null, null);
 		new Thread(worker).start();
 		lock.lock();
+		NPOsmose.o.start();
 		try {
 			while (!o.allTerminated())
 				condition.await();
@@ -68,7 +70,12 @@ public class NPOsmose {
 		ImageConvertible graph = new ImageConvertibleImpl();
 		
 		ginfo.write2File("./result.txt", graph);
-		System.out.println("Written Result");
+		long stopTime=System.currentTimeMillis();
+		long millis=stopTime-startTime;
+		String hms = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),
+	            TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
+	            TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
+		System.out.println("Written Result in "+hms);
 		//ginfo.write2File("/home/dennis/Schreibtisch/result.txt", graph);
 	}
 
