@@ -17,6 +17,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private TIntDoubleHashMap rightAcc=new TIntDoubleHashMap();
 	private Exchanger<TIntDoubleHashMap> exchangeLeft;
 	private Exchanger<TIntDoubleHashMap> exchangeRight;
+	private double oldValueSum;
 	private double valueSum;
 	private int columnIndex;
 	private TDoubleArrayList edges = new TDoubleArrayList();
@@ -99,9 +100,17 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	public void run() {
  		NPOsmose.o.addThread(Thread.currentThread());
+		TIntDoubleHashMap gotLeft=null;
+		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			TIntDoubleHashMap gotLeft=null;
-			TIntDoubleHashMap gotRight=null;
+			if (totalIterCounter % 50000 == 0) {
+				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
+				ImageConvertible graph = new ImageConvertibleImpl();
+				NPOsmose.ginfo.write2File("./test.txt", graph);
+				System.out.println(columnIndex+": new pic");
+			}else if(totalIterCounter % 1000==0){
+				System.out.println(totalIterCounter);
+			}
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -219,8 +228,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return new TIntDoubleHashMap();
 					}else{
 						TIntDoubleHashMap got=ex.exchange(accCopy);
-						acc=new TIntDoubleHashMap();
 						calculateIter(acc, got, left);
+						acc=new TIntDoubleHashMap();
 						return got;
 					}
 				} catch (InterruptedException e) {
@@ -249,6 +258,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numLeft=1;
+				//if(columnIndex==1 || columnIndex==2)
+				//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -259,10 +270,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numRight=1;
+				//if(columnIndex==1 || columnIndex==2)
+					//System.out.println("Thread "+columnIndex+": numRight="+numRight);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -273,6 +288,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
 		}
 	}
 	
@@ -363,10 +380,21 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	
-	public void setValueSum(double sum) {
+	synchronized public void setValueSum(double sum) {
+		this.oldValueSum=valueSum;
 		this.valueSum=sum;
 	}
+	
+	public double getOldValueSum(){
+		return oldValueSum;
+	}
 
+	public int getNumLeft(){
+		return numLeft;
+	}
+	public int getNumRight(){
+		return numRight;
+	}
 
 
 }

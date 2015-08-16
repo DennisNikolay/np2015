@@ -57,8 +57,8 @@ public class GlobalObserver implements Observer {
 			workers.put(scw, scw.getValueSum());
 		}
 		boolean b=true;
-		for(Double d: workers.values()){
-			if(d==0){
+		for(SimpleColumnWorker w : workers.keySet()){
+			if(w.getNumLeft()!=1 || w.getNumRight()!=1){
 				b=false;
 			}
 		}
