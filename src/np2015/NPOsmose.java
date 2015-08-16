@@ -9,8 +9,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map.Entry;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -57,7 +55,6 @@ public class NPOsmose {
 				e.getKey(), null, null);
 		new Thread(worker).start();
 		lock.lock();
-		NPOsmose.o.start();
 		try {
 			while (!o.allTerminated())
 				condition.await();
@@ -76,7 +73,6 @@ public class NPOsmose {
 	            TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
 	            TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
 		System.out.println("Written Result in "+hms);
-		//ginfo.write2File("/home/dennis/Schreibtisch/result.txt", graph);
 	}
 
 	public static synchronized void incrementWorkersActive() {

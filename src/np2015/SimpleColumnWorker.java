@@ -7,9 +7,7 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Exchanger;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimpleColumnWorker extends Observable implements Runnable{
@@ -101,14 +99,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-		/*	if (totalIterCounter % 10000000 == 0) {
-				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
-				ImageConvertible graph = new ImageConvertibleImpl();
-				NPOsmose.ginfo.write2File("./test.txt", graph);
-				System.out.println(columnIndex+": new pic");
-			}else if(totalIterCounter % 1000000==0){
-				System.out.println(totalIterCounter);
-			}*/
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -173,22 +163,15 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 		Exchanger<TIntDoubleHashMap> ex;
 		TIntDoubleHashMap acc;
-		int num;
 		if(left){
 			ex=exchangeLeft;
 			acc=leftAcc;
-			num=numLeft;
 		}else{
 			ex=exchangeRight;
 			acc=rightAcc;
-			num=numRight;
 		}
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
-				/*for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
-					iter.advance();
-					iter.setValue(iter.value()/num);
-				}*/
 				ex=new Exchanger<TIntDoubleHashMap>();
 				Runnable r;
 				if(left){
@@ -215,10 +198,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			}
 		}else{
 				try {
-					/*for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
-						iter.advance();
-						iter.setValue(iter.value()/num);
-					}*/
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					if(shouldTerminate() || Thread.interrupted()){
@@ -230,8 +209,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return got;
 					}
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					//e.printStackTrace();
 					return new TIntDoubleHashMap();
 				}
 		}
@@ -255,8 +232,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numLeft=1;
-				//if(columnIndex==1 || columnIndex==2)
-				//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -267,14 +242,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
-			//if(columnIndex==1 || columnIndex==2)
-			//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numRight=1;
-				//if(columnIndex==1 || columnIndex==2)
-					//System.out.println("Thread "+columnIndex+": numRight="+numRight);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -285,17 +256,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
-			//if(columnIndex==1 || columnIndex==2)
-			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
 		}
 	}
 	
 	public double getValueSum() {
-		/*double result=0;
-		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); i.advance()){
-			result+=i.value();
-		}
-		return result;*/
 		return valueSum;
 	}
 
@@ -320,7 +284,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			acc=rightAcc;
 		}
 		if(acc.containsKey(y)){
-			//TODO:
 			acc.put(y, acc.get(y)+value);
 		}else{
 			if(value!=0){
