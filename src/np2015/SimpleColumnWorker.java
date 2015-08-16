@@ -172,14 +172,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	}
 	
-	private TIntDoubleHashMap exchangeAcc(Exchanger exchanger, TIntDoubleHashMap accumulators, int iterations, int neighborColumnIndex, boolean left) {
+	private TIntDoubleHashMap exchangeAcc(Exchanger<TIntDoubleHashMap> exchanger, TIntDoubleHashMap accumulators, int iterations, int neighborColumnIndex, boolean left) {
 		Exchanger<TIntDoubleHashMap> ex;
 		TIntDoubleHashMap acc;
 		int num;
 		
-		ex=exchangeLeft;
-		acc=leftAcc;
-		num=numLeft;
+		ex=exchanger;
+		acc=accumulators;
+		num=iterations;
 		
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
