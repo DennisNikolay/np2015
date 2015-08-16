@@ -101,7 +101,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			if (totalIterCounter % 50000 == 0) {
+			if (totalIterCounter % 500000 == 0) {
 				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
 				ImageConvertible graph = new ImageConvertibleImpl();
 				NPOsmose.ginfo.write2File("./test.txt", graph);
@@ -185,10 +185,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
-				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+				/*for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
 					iter.advance();
 					iter.setValue(iter.value()/num);
-				}
+				}*/
 				ex=new Exchanger<TIntDoubleHashMap>();
 				Runnable r;
 				if(left){
@@ -215,10 +215,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			}
 		}else{
 				try {
-					for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					/*for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
 						iter.advance();
 						iter.setValue(iter.value()/num);
-					}
+					}*/
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					if(shouldTerminate() || Thread.interrupted()){
