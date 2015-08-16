@@ -107,7 +107,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				NPOsmose.ginfo.write2File("./test.txt", graph);
 				System.out.println(columnIndex+": new pic");
 			}else if(totalIterCounter % 1000==0){
-				//System.out.println(totalIterCounter);
+				System.out.println(totalIterCounter);
 			}
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
