@@ -3,16 +3,20 @@ package np2015;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Exchanger;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimpleColumnWorker extends Observable implements Runnable{
 
 	private TIntDoubleHashMap vertex=new TIntDoubleHashMap();
+	private TIntDoubleHashMap oldVertex=new TIntDoubleHashMap();
+	
 	private TIntDoubleHashMap leftAcc=new TIntDoubleHashMap();
 	private TIntDoubleHashMap rightAcc=new TIntDoubleHashMap();
 	private Exchanger<TIntDoubleHashMap> exchangeLeft;
@@ -21,8 +25,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private double valueSum;
 	private int columnIndex;
 	private TDoubleArrayList edges = new TDoubleArrayList();
-
-	private GraphInfo info;
 	
 	private int totalIterCounter=0;
 	private int leftIterCounter=0;
@@ -34,11 +36,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private AtomicBoolean terminate=new AtomicBoolean(false);
 
 	
-	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
-			Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
+	public SimpleColumnWorker(int column, Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
 		columnIndex=column;
-		info=ginfo;
-		for (int i = 0; i < ginfo.height * 4; i++) {
+		for (int i = 0; i < NPOsmose.ginfo.height * 4; i++) {
 			Neighbor n = Neighbor.Left;
 			switch (i % 4) {
 			case 0:
@@ -54,10 +54,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				n = Neighbor.Bottom;
 				break;
 			}
-			edges.add(ginfo.getRateForTarget(columnIndex, i / 4, n));
+			edges.add(NPOsmose.ginfo.getRateForTarget(columnIndex, i / 4, n));
 		}
-		addObserver(o);
- 		o.addWorker(this);
+		addObserver(NPOsmose.o);
+		NPOsmose.o.addWorker(this);
 		exchangeLeft = el;
 		exchangeRight = er;
 		
@@ -65,20 +65,18 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	
 	public SimpleColumnWorker(HashMap<Integer, Double> initialVertexValues,
-			int column, GraphInfo ginfo, GlobalObserver o,
-			Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {		
+			int column, Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {		
 		
-		this(column, ginfo, o, el, er);
+		this(column, el, er);
 		for (Entry<Integer, Double> e : initialVertexValues.entrySet()) {
 			vertex.put(e.getKey(), e.getValue());
 		}
 	}
 
-	public SimpleColumnWorker(TIntDoubleHashMap initialVertexValues, int column,
-			GraphInfo ginfo, GlobalObserver o, Exchanger<TIntDoubleHashMap> el,
+	public SimpleColumnWorker(TIntDoubleHashMap initialVertexValues, int column, Exchanger<TIntDoubleHashMap> el,
 			Exchanger<TIntDoubleHashMap> er) {
 		
-		this(column, ginfo, o, el, er);
+		this(column, el, er);
 		vertex=initialVertexValues;
 		
 	}
@@ -109,7 +107,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				NPOsmose.ginfo.write2File("./test.txt", graph);
 				System.out.println(columnIndex+": new pic");
 			}else if(totalIterCounter % 1000==0){
-				System.out.println(totalIterCounter);
+				//System.out.println(totalIterCounter);
 			}
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
@@ -138,17 +136,18 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				if(columnIndex>0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				}
-				if(columnIndex!=info.width-1){
+				if(columnIndex!=NPOsmose.ginfo.width-1){
 					addRightAcc(iter.key(), propagateRight, totalIterCounter);
 				}
 				if(propagateTop!=0 && iter.key()!=0){
 					tmpMap.adjustOrPutValue(iter.key()-1, propagateTop, propagateTop);
 				}
-				if(propagateBottom!=0 && iter.key()!=info.height-1){
+				if(propagateBottom!=0 && iter.key()!=NPOsmose.ginfo.height-1){
 					tmpMap.adjustOrPutValue(iter.key()+1, propagateBottom, propagateBottom);
 				}
 			}
-			vertex=tmpMap;
+			setVertex(tmpMap);
+			
 			rightIterCounter++;
 			leftIterCounter++;
 			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.interrupted()){
@@ -165,7 +164,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			setValueSum(sum);
 			
 		}
-		NPOsmose.result.put(getColumnIndex(), getVertexValues());
+		synchronized (NPOsmose.class) { NPOsmose.result.put(getColumnIndex(), getVertexValues()); }
 
 	}
 	
@@ -197,15 +196,13 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					acc=new TIntDoubleHashMap();
-					r = new SimpleColumnWorker(accCopy, columnIndex-1,
-							NPOsmose.ginfo, NPOsmose.o, null, ex);
+					r = new SimpleColumnWorker(accCopy, columnIndex-1, null, ex);
 				}else{
 					this.exchangeRight=ex;
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					acc=new TIntDoubleHashMap();
-					r = new SimpleColumnWorker(accCopy, columnIndex+1,
-							NPOsmose.ginfo, NPOsmose.o, ex, null);
+					r = new SimpleColumnWorker(accCopy, columnIndex+1, ex, null);
 				}
 				new Thread(r).start();
 				return new TIntDoubleHashMap();
@@ -345,7 +342,11 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	
 	public TIntDoubleHashMap getVertexValues() {
-		return vertex;
+		return new TIntDoubleHashMap(vertex);
+	}
+
+	public TIntDoubleHashMap getOldVertexValues() {
+		return new TIntDoubleHashMap(oldVertex);
 	}
 
 	
@@ -367,18 +368,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	public boolean shouldTerminate() {
 		return terminate.get();
 	}
-
-	
-	public void setLeftExchanger(Exchanger<TIntDoubleHashMap> left) {
-		this.exchangeLeft=left;
-
-	}
-
-	
-	public void setRightExchanger(Exchanger<TIntDoubleHashMap> right) {
-		this.exchangeRight=right;
-	}
-
 	
 	synchronized public void setValueSum(double sum) {
 		this.oldValueSum=valueSum;
@@ -395,6 +384,10 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	public int getNumRight(){
 		return numRight;
 	}
-
+	
+	public void setVertex(TIntDoubleHashMap v) {
+		oldVertex = vertex;
+		vertex = v;
+	}
 
 }

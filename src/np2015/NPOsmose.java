@@ -20,15 +20,15 @@ import com.google.gson.Gson;
 public class NPOsmose {
 
 	public static GraphInfo ginfo;
-	public static GlobalObserver o = new GlobalObserver();
-	public static double epsilon=0.1;
-	public static HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
+	public static final GlobalObserver o = new GlobalObserver();
+	public static double epsilon = 0.1;
+	public static final HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
 
 	public static int workersActive = 0;
 
-	public static Lock lock = new ReentrantLock();
-	public static Condition condition = lock.newCondition();
-	public static LinkedList<Thread> threads=new LinkedList<Thread>();
+	public static final  Lock lock = new ReentrantLock();
+	public static final Condition condition = lock.newCondition();
+	public static final LinkedList<Thread> threads=new LinkedList<Thread>();
 
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
@@ -53,7 +53,7 @@ public class NPOsmose {
 		Entry<Integer, HashMap<Integer, Double>> e = ginfo.column2row2initialValue
 				.entrySet().iterator().next();
 		SimpleColumnWorker worker = new SimpleColumnWorker(e.getValue(),
-				e.getKey(), ginfo, o, null, null);
+				e.getKey(), null, null);
 		new Thread(worker).start();
 		lock.lock();
 		try {
@@ -65,11 +65,8 @@ public class NPOsmose {
 		for(Thread t: threads){
 			t.join();
 		}
-		ImageConvertible graph = new ImageConvertibleImpl(); // <--- you should
-																// implement
-																// ImageConvertible
-																// to write the
-																// graph out
+		ImageConvertible graph = new ImageConvertibleImpl();
+		
 		ginfo.write2File("./result.txt", graph);
 		System.out.println("Written Result");
 		//ginfo.write2File("/home/dennis/Schreibtisch/result.txt", graph);
