@@ -231,8 +231,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return new TIntDoubleHashMap();
 					}else{
 						TIntDoubleHashMap got=ex.exchange(accCopy);
-						acc=new TIntDoubleHashMap();
 						calculateIter(acc, got, left);
+						acc=new TIntDoubleHashMap();
 						return got;
 					}
 				} catch (InterruptedException e) {
@@ -249,19 +249,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
-		if(left){
-			if(numLeft==1){
-				setChanged();
-				notifyObservers();
-				return;
-			}
-		}else{
-			if(numRight==1){
-				setChanged();
-				notifyObservers();
-				return;
-			}
-		}
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
 			iter.advance();
 			result+=iter.value();
@@ -274,6 +261,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numLeft=1;
+				//if(columnIndex==1 || columnIndex==2)
+				//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -284,10 +273,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numRight=1;
+				//if(columnIndex==1 || columnIndex==2)
+					//System.out.println("Thread "+columnIndex+": numRight="+numRight);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -298,6 +291,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
 		}
 	}
 	
