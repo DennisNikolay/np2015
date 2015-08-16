@@ -153,12 +153,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			rightIterCounter++;
 			leftIterCounter++;
 			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
-				gotLeft=exchangeLeftAccValues();
+				gotLeft=exchangeAccLeft();
 				leftIterCounter=0;
 				leftAcc=new TIntDoubleHashMap();
 			}
 			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
-				gotRight=exchangeRightAccValues();
+				gotRight=exchangeAccRight();
 				rightIterCounter=0;
 				rightAcc=new TIntDoubleHashMap();
 			}
@@ -172,7 +172,78 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	}
 	
+	private TIntDoubleHashMap exchangeAcc(Exchanger exchanger, TIntDoubleHashMap accumulators, int iterations, int neighborColumnIndex, boolean left) {
+		Exchanger<TIntDoubleHashMap> ex;
+		TIntDoubleHashMap acc;
+		int num;
+		
+		ex=exchangeLeft;
+		acc=leftAcc;
+		num=numLeft;
+		
+		if(ex==null){
+			if(acc!=null && !acc.isEmpty()){
+				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					iter.advance();
+					iter.setValue(iter.value()/num);
+				}
+				ex=new Exchanger<TIntDoubleHashMap>();
+				Runnable r;
+				
+				exchanger=ex;
+				TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+				accCopy.putAll(acc);
+				acc=new TIntDoubleHashMap();
+				r = new SimpleColumnWorker(accCopy, neighborColumnIndex,
+						NPOsmose.ginfo, NPOsmose.o, null, ex);
+				
+				new Thread(r).start();
+				return new TIntDoubleHashMap();
+				
+			}else{
+				if(left){
+					numLeft=1;
+				}else{
+					numRight=1;
+				}
+			}
+		} else {
+			try {
+				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					iter.advance();
+					iter.setValue(iter.value()/num);
+				}
+				TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+				accCopy.putAll(acc);
+				if(shouldTerminate() || Thread.interrupted()){
+					return new TIntDoubleHashMap();
+				}else{
+					TIntDoubleHashMap got=ex.exchange(accCopy);
+					calculateIter(acc, got, left);
+					acc=new TIntDoubleHashMap();
+					return got;
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+				return new TIntDoubleHashMap();
+			}
+		}
 
+	return null;
+		
+	}
+	
+	private TIntDoubleHashMap exchangeAccLeft() {
+		return exchangeAcc(exchangeLeft, leftAcc, numLeft, columnIndex-1, true);
+	}
+	
+	private TIntDoubleHashMap exchangeAccRight() {
+		return exchangeAcc(exchangeRight, rightAcc, numRight, columnIndex+1, false);
+	}
+	
+	
+/*	
 	private TIntDoubleHashMap exchangeAcc(boolean left){
 
 		Exchanger<TIntDoubleHashMap> ex;
@@ -219,7 +290,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					numRight=1;
 				}
 			}
-		}else{
+		} else {
 				try {
 					for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
 						iter.advance();
@@ -243,10 +314,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 
 		return null;
-		
-		
 	}
-	
+*/	
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
@@ -310,15 +379,16 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		terminate.set(true);
 	}
 
+	/*
 	public TIntDoubleHashMap exchangeLeftAccValues() {
-		return exchangeAcc(true);
+		return exchangeAccLeft(true);
 	}
 
 	
 	public TIntDoubleHashMap exchangeRightAccValues() {
 		return exchangeAcc(false);
 	}
-
+*/
 	private void addAcc(int y, double value, int numIter, boolean left){
 		TIntDoubleHashMap acc;
 		if(left){
