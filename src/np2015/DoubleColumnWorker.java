@@ -12,39 +12,77 @@ import gnu.trove.procedure.TIntDoubleProcedure;
 
 
 public class DoubleColumnWorker extends Observable implements TIntDoubleProcedure, Runnable{
-
+	/**
+	 * A hash map (row -> dobule) containing all node values of the column the thread is working at.
+	 */
 	private TIntDoubleHashMap vertex=new TIntDoubleHashMap();
 	
+	/**
+	 * The accumulator lists. For each neighbor one list.
+	 */
 	private TIntDoubleHashMap leftAcc=new TIntDoubleHashMap();
 	private TIntDoubleHashMap rightAcc=new TIntDoubleHashMap();
 	
+	/**
+	 * The exchanger to exchange the accumulator lists between two adjacent threads/colum worker.
+	 */
 	private Exchanger<TIntDoubleHashMap> leftExchanger;
 	private Exchanger<TIntDoubleHashMap> rightExchanger;
 	
 	
-	//Contains propagations
+	/**
+	 * Contains the local propagations.
+	 */
 	private TIntDoubleHashMap add=new TIntDoubleHashMap();
 	
+	/**
+	 * The column's index.
+	 */
 	private int columnIndex;
 	
+	/**
+	 * The propagation rates of one column.
+	 */
 	private TDoubleArrayList edges = new TDoubleArrayList();
 	
+	/**
+	 * The total amount if local iterations.
+	 */
 	public int iterCounter=0;
+	
+	/**
+	 * The current amount of iterations concerning the left/right accumulators.
+	 */
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
 	
+	/**
+	 * The amount of iterations that have to be made before exchanging with the right/left neighbor.
+	 */
 	private int numLeft=100;
 	private int numRight=100;
 	
-	
+	/**
+	 * The sum of all node values within the same column. Three different versions in order to check global convergence.
+	 */
 	private double tmpSum=0;
 	private double valueSum=0;
 	private double oldValueSum=0;
 	
+	/**
+	 * The column worker constructor. One instance is representing a thread that calculates the node values of one single column.
+	 * 
+	 * @param map 	- The vertex values.
+	 * @param column - The thread's column index.
+	 * @param el	- The thread's left exchanger.
+	 * @param er	- The threas's right exchanger.
+	 */
 	public DoubleColumnWorker(TIntDoubleHashMap map, int column, Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
 		columnIndex=column;
 		NPOsmose.o.addWorker(this);
 		this.addObserver(NPOsmose.o);
+		
+		// Calculating the propagation rates of each node, given the @GraphInfo information.
 		for (int i = 0; i < NPOsmose.ginfo.height * 4; i++) {
 			Neighbor n = Neighbor.Left;
 			switch (i % 4) {
@@ -73,7 +111,13 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 		this.valueSum = valueSum;
 	}
 	
-
+	/**
+	 * Gets the propagation rate of one node to a specific direction.
+	 * 
+	 * @param y	- The row of the node.
+	 * @param dir - The direction to propagate at.
+	 * @return
+	 */
 	private double getEdge(int y, Neighbor dir){
 		switch(dir){
 		case Left:
@@ -203,9 +247,9 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 	}
 
 	/**
-	 * main method. does the iterations until the thread is interrupted
+	 * The main method of the column worker. While not terminated or interrupted by the observer the column worker/thread iterates
+	 * over its nodes and propagates the values to its neighbors.
 	 */
-	
 	@Override
 	synchronized public void run() {
 		synchronized(NPOsmose.class){NPOsmose.threads.add(Thread.currentThread());}
