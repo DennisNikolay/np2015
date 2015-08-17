@@ -172,6 +172,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
 		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
+			if (totalIterCounter % 500000 == 0) {
+ 				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
+ 				ImageConvertible graph = new ImageConvertibleImpl();
+ 				NPOsmose.ginfo.write2File("./test.txt", graph);
+ 				System.out.println(this.columnIndex+": new tmpResult");
+			}
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			
@@ -343,7 +349,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				return;
 			}
-			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon*10), 100);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
@@ -357,7 +363,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				}
 				return;
 			}
-			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon*10), 100);
 		}
 	}
 	

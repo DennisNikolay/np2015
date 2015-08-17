@@ -18,12 +18,9 @@ import com.google.gson.Gson;
 public class NPOsmose {
 
 	public static GraphInfo ginfo;
-	public static final GlobalObserver o = new GlobalObserver();
+	public static final ConvergenceObserver o = new ConvergenceObserver();
 	public static double epsilon = 0.1;
 	public static final HashMap<Integer, TIntDoubleHashMap> result=new HashMap<Integer, TIntDoubleHashMap>();	
-
-	public static int workersActive = 0;
-
 	public static final  Lock lock = new ReentrantLock();
 	public static final Condition condition = lock.newCondition();
 	public static final LinkedList<Thread> threads=new LinkedList<Thread>();
@@ -51,10 +48,12 @@ public class NPOsmose {
 		// Your implementation can now access ginfo to read out all important values
 		Entry<Integer, HashMap<Integer, Double>> e = ginfo.column2row2initialValue
 				.entrySet().iterator().next();
-		SimpleColumnWorker worker = new SimpleColumnWorker(e.getValue(),
-				e.getKey(), null, null);
+		TIntDoubleHashMap map=new TIntDoubleHashMap();
+		map.putAll(e.getValue());
+		DoubleColumnWorker worker = new DoubleColumnWorker(map, e.getKey(), null, null);
 		new Thread(worker).start();
 		lock.lock();
+		//new Thread(o).start();
 		try {
 			// Wait until all threads have terminated.
 			while (!o.allTerminated())
@@ -62,8 +61,10 @@ public class NPOsmose {
 		} finally {
 			lock.unlock();
 		}
-		for(Thread t: threads){
-			t.join();
+		synchronized(NPOsmose.class){
+			for(Thread t: threads){
+				t.join();
+			}
 		}
 		
 		// Read out the calculated values.
@@ -78,14 +79,6 @@ public class NPOsmose {
 	            TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(millis)),
 	            TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
 		System.out.println("Written Result in "+hms);
-	}
-
-	public static synchronized void incrementWorkersActive() {
-		workersActive++;
-	}
-
-	public static synchronized int getWorkersActive() {
-		return workersActive;
 	}
 
 }
