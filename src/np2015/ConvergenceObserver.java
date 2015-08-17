@@ -10,31 +10,54 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ConvergenceObserver implements Observer, Runnable {
-
+/**
+ * Observing all running threads according to convergence.
+ */
+public class ConvergenceObserver implements Observer {
+	
+	/**
+	 * A list of all active threads/column workers.
+	 */
 	private LinkedList<DoubleColumnWorker> workers=new LinkedList<DoubleColumnWorker>();
+	
+	/**
+	 * A list of all active threads/column workers which are not converged locally yet.
+	 */
 	private TIntArrayList localConvergence=new TIntArrayList();
-	private Lock lock=new ReentrantLock();
-	private Condition allLocalConvergent=lock.newCondition();
 
+
+	/**
+	 * Are all threads terminated/terminating yet?
+	 */
 	private boolean allTerm=false;;
 	
+	
+	/**
+	 * To be called by every column worker once. Adds the column worker to the worker lists.
+	 * 
+	 * @param worker	- The thread which has just started working.
+	 */
 	synchronized public void addWorker(DoubleColumnWorker w){
 		localConvergence.add(w.getColumnIndex());
 		workers.add(w);
 	}
 	
+	/**
+	 * Triggered by notifying thread suspecting local convergence.
+	 */
 	@Override
-	public void update(Observable arg0, Object arg1) {
+	synchronized public void update(Observable arg0, Object arg1) {
 		localConvergence.remove((int)arg1);
 		if(localConvergence.isEmpty()){
-			this.run();
+			checkConvergence();
 		}
 		
 	}
 
-	@Override
-	synchronized public void run() {
+	/**
+	 * Checks global convergence.
+	 */
+	private void checkConvergence() {
 		if(globalConvergent()){
 			for(DoubleColumnWorker w:workers){
 				NPOsmose.result.put(w.getColumnIndex(), w.getVertexValues());
@@ -60,18 +83,18 @@ public class ConvergenceObserver implements Observer, Runnable {
 		return allTerm;
 	}
 	
+	/**
+	 * Calculates the euclidean norm of the old and current value sums.
+	 * @return true if it's global convergent.
+	 */
 	private boolean globalConvergent(){
 		double sum=0;
-		int iterCounter=0;
 		for(DoubleColumnWorker w:workers){;
 			sum+=(w.getOldValueSum()-w.getValueSum())*(w.getOldValueSum()-w.getValueSum());
-			iterCounter=w.iterCounter;
 		}
 		if(Math.sqrt(sum)<NPOsmose.epsilon){
 			return true;
 		}
-		if(iterCounter % 10000==0)
-			System.out.println(Math.sqrt(sum)+" epsilon: "+NPOsmose.epsilon);
 		return false;
 	}
 
