@@ -56,6 +56,7 @@ public class NPOsmose {
 		new Thread(worker).start();
 		lock.lock();
 		try {
+			// Wait until all threads have terminated.
 			while (!o.allTerminated())
 				condition.await();
 		} finally {
@@ -64,9 +65,13 @@ public class NPOsmose {
 		for(Thread t: threads){
 			t.join();
 		}
-		ImageConvertible graph = new ImageConvertibleImpl();
 		
+		// Read out the calculated values.
+		ImageConvertible graph = new ImageConvertibleImpl();
+		// Write them into the file.
 		ginfo.write2File("./result.txt", graph);
+		
+		// Stopwatch.
 		long stopTime=System.currentTimeMillis();
 		long millis=stopTime-startTime;
 		String hms = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(millis),

@@ -7,15 +7,16 @@ import java.util.Observer;
 
 /**
  * Observing all running threads according to convergence.
- * 
- * @author Mo
  */
 public class GlobalObserver implements Observer {
 
+	/**
+	 * Are all threads terminated/terminating?
+	 */
 	private boolean allTerminated=false;
 	
 	/**
-	 * Map from worker to boolean. The boolean 
+	 * A list of all active threads/column workers.
 	 */
 	private LinkedList<SimpleColumnWorker> workers = new LinkedList<SimpleColumnWorker>();
 	
@@ -24,9 +25,9 @@ public class GlobalObserver implements Observer {
 	}
 	
 	/**
-	 * To be called by every column worker once.
+	 * To be called by every column worker once. Adds the column worker to the active worker list.
 	 * 
-	 * @param worker
+	 * @param worker	- The thread which has just started working.
 	 */
 	public synchronized void addWorker(SimpleColumnWorker worker) {
 		workers.add(worker);
@@ -48,12 +49,13 @@ public class GlobalObserver implements Observer {
 			}
 		}
 		if (b) {
-			// all threads have converged locally
+			// Have all threads converged locally?
 			if (checkGlobalConvergence(workers)) {
 				boolean ter = false;
 				for (SimpleColumnWorker w : workers) {
 					for(TIntDoubleIterator iter = w.getOldVertexValues().iterator(); iter.hasNext();) {
 						iter.advance();
+						
 						if (Math.abs(iter.value() - w.getVertexValues().get(iter.key())) > NPOsmose.epsilon) {
 							ter = true;
 						}
@@ -63,18 +65,21 @@ public class GlobalObserver implements Observer {
 				if (ter) {
 					return;
 				}	
-				// terminate threads
+				// Terminate threads
 				for (SimpleColumnWorker columnWorker : workers) {
 					columnWorker.terminate();	
 				}
+				// Has to be done because some thread might be still waiting for horizontal exchange.
 				synchronized (NPOsmose.class) {
 					for(Thread t: NPOsmose.threads){
 						t.interrupt();
 					}
 				}
 				
+				
 				allTerminated=true;
 				NPOsmose.lock.lock();
+				// Signal main thread.
 				NPOsmose.condition.signal();
 				NPOsmose.lock.unlock();
 			}
@@ -82,6 +87,11 @@ public class GlobalObserver implements Observer {
 
 	}
 
+	/**
+	 * // Check for global convergence comparing old with new value sum of one and the same column.
+	 * @param The list of all active column workers.
+	 * @return	- Returns true, if all threads have converged locally.
+	 */
 	private boolean checkGlobalConvergence(LinkedList<SimpleColumnWorker> l) {
 		// Compare old with current value considering epsilon.
 		for (SimpleColumnWorker columnWorker : l) {

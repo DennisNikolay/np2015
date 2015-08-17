@@ -6,6 +6,9 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
+/**
+ * Reads out the calculated values by the column workers.
+ */
 public class ImageConvertibleImpl implements ImageConvertible {
 
 	private HashMap<Integer, HashMap<Integer, Double>> map=new HashMap<Integer, HashMap<Integer, Double>>();
