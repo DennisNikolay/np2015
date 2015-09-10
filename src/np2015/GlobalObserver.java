@@ -78,7 +78,7 @@ public class GlobalObserver implements Observer {
 					t.interrupt();
 				}
 				
-				allTerminated=true;
+				setAllTerminated();
 				//System.out.println("All terminated");
 				NPOsmose.lock.lock();
 				NPOsmose.condition.signal();
@@ -115,4 +115,7 @@ public class GlobalObserver implements Observer {
 		NPOsmose.threads.add(t);
 	}
 	
+	public synchronized void setAllTerminated() {
+		allTerminated = true;
+	}
 }
