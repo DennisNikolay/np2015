@@ -3,6 +3,7 @@ package np2015;
 import gnu.trove.iterator.TIntDoubleIterator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntDoubleHashMap;
+
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
@@ -31,6 +32,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	private int numRight=100;
 	
 	private AtomicBoolean terminate=new AtomicBoolean(false);
+	private double oldValueSum;
 
 	
 	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
@@ -98,10 +100,16 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 	}
 
 	public void run() {
- 		NPOsmose.o.addThread(Thread.currentThread());
-		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			TIntDoubleHashMap gotLeft=null;
-			TIntDoubleHashMap gotRight=null;
+ 		synchronized(NPOsmose.class){NPOsmose.o.addThread(Thread.currentThread());}
+		TIntDoubleHashMap gotLeft=null;
+		TIntDoubleHashMap gotRight=null;
+		while (!shouldTerminate() && !Thread.currentThread().isInterrupted() && totalIterCounter != Integer.MAX_VALUE) {
+			/*if (totalIterCounter % 10000000 == 0) {
+				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
+				ImageConvertible graph = new ImageConvertibleImpl();
+				NPOsmose.ginfo.write2File("./test.txt", graph);
+				System.out.println("new pic");
+			}*/
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
@@ -125,7 +133,9 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
 				
-				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight,iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
+				double newValue = iter.value() - propagateTop - propagateBottom - propagateLeft - propagateRight;
+				tmpMap.adjustOrPutValue(iter.key(), newValue, newValue);
+				
 				if(columnIndex>0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				}
@@ -142,28 +152,98 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			vertex=tmpMap;
 			rightIterCounter++;
 			leftIterCounter++;
-			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.interrupted()){
-				gotLeft=exchangeLeftAccValues();
+			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
+				gotLeft=exchangeAccLeft();
 				leftIterCounter=0;
 				leftAcc=new TIntDoubleHashMap();
 			}
-			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.interrupted()){
-				gotRight=exchangeRightAccValues();
+			if(rightIterCounter==numRight && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
+				gotRight=exchangeAccRight();
 				rightIterCounter=0;
 				rightAcc=new TIntDoubleHashMap();
 			}
 			totalIterCounter++;
+			//System.out.println(NPOsmose.total);
 			setValueSum(sum);
 			
 		}
-		NPOsmose.result.put(getColumnIndex(), getVertexValues());
-
-		System.out.println("Thread " + getColumnIndex() + " has terminated.");
+		synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
 
 
 	}
 	
+	private TIntDoubleHashMap exchangeAcc(Exchanger<TIntDoubleHashMap> exchanger, TIntDoubleHashMap accumulators, int iterations, int neighborColumnIndex, boolean left) {
+		Exchanger<TIntDoubleHashMap> ex;
+		TIntDoubleHashMap acc;
+		int num;
+		
+		ex=exchanger;
+		acc=accumulators;
+		num=iterations;
+		
+		if(ex==null){
+			if(acc!=null && !acc.isEmpty()){
+				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					iter.advance();
+					iter.setValue(iter.value()/num);
+				}
+				ex=new Exchanger<TIntDoubleHashMap>();
+				Runnable r;
+				
+				exchanger=ex;
+				TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+				accCopy.putAll(acc);
+				acc=new TIntDoubleHashMap();
+				r = new SimpleColumnWorker(accCopy, neighborColumnIndex,
+						NPOsmose.ginfo, NPOsmose.o, null, ex);
+				
+				new Thread(r).start();
+				return new TIntDoubleHashMap();
+				
+			}else{
+				if(left){
+					numLeft=1;
+				}else{
+					numRight=1;
+				}
+			}
+		} else {
+			try {
+				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
+					iter.advance();
+					iter.setValue(iter.value()/num);
+				}
+				TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
+				accCopy.putAll(acc);
+				if(shouldTerminate() || Thread.interrupted()){
+					return new TIntDoubleHashMap();
+				}else{
+					TIntDoubleHashMap got=ex.exchange(accCopy);
+					calculateIter(acc, got, iterations, left);
+					acc=new TIntDoubleHashMap();
+					return got;
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+				return new TIntDoubleHashMap();
+			}
+		}
 
+	return null;
+		
+	}
+	
+	private TIntDoubleHashMap exchangeAccLeft() {
+		return exchangeAcc(exchangeLeft, leftAcc, numLeft, columnIndex-1, true);
+	}
+	
+	private TIntDoubleHashMap exchangeAccRight() {
+		return exchangeAcc(exchangeRight, rightAcc, numRight, columnIndex+1, false);
+	}
+	
+	
+/*	
 	private TIntDoubleHashMap exchangeAcc(boolean left){
 
 		Exchanger<TIntDoubleHashMap> ex;
@@ -210,7 +290,7 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					numRight=1;
 				}
 			}
-		}else{
+		} else {
 				try {
 					for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
 						iter.advance();
@@ -222,8 +302,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return new TIntDoubleHashMap();
 					}else{
 						TIntDoubleHashMap got=ex.exchange(accCopy);
-						acc=new TIntDoubleHashMap();
 						calculateIter(acc, got, left);
+						acc=new TIntDoubleHashMap();
 						return got;
 					}
 				} catch (InterruptedException e) {
@@ -234,10 +314,51 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 
 		return null;
-		
-		
+	}
+*/	
+	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, int iterations, boolean left) {
+		double result=0;
+		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
+			iter.advance();
+			result+=iter.value();
+		}
+		for(TIntDoubleIterator iter=other.iterator(); iter.hasNext();){
+			iter.advance();
+			result-=iter.value();
+		}
+		result = Math.abs(result);
+		if (result <= NPOsmose.epsilon) {
+			if (left) {
+				numLeft = 1;
+			} else {
+				numRight = 1;
+			}
+				
+			if(numLeft==1 && numRight==1){
+				if(shouldTerminate() || Thread.interrupted()){
+					return;
+				}
+				setChanged();
+				notifyObservers();
+			}
+			return;
+		}		
+		if (left) {
+			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+		} else {
+			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+		}
 	}
 	
+	private void calculateIterLeft(TIntDoubleHashMap own, TIntDoubleHashMap other) {
+		calculateIter(own, other, numLeft, true);
+	}
+	
+	private void calculateIterRight(TIntDoubleHashMap own, TIntDoubleHashMap other) {
+		calculateIter(own, other, numRight, false);
+	}
+	
+	/*
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
@@ -252,6 +373,8 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numLeft=1;
+				//if(columnIndex==1 || columnIndex==2)
+				//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -262,10 +385,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
 				numRight=1;
+				//if(columnIndex==1 || columnIndex==2)
+					//System.out.println("Thread "+columnIndex+": numRight="+numRight);
 				if(numLeft==1 && numRight==1){
 					if(shouldTerminate() || Thread.interrupted()){
 						return;
@@ -276,31 +403,36 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				return;
 			}
 			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
+			//if(columnIndex==1 || columnIndex==2)
+			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
 		}
 	}
+	*/
 	
-	public double getValueSum() {
-		/*double result=0;
-		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); i.advance()){
+	synchronized public double getValueSum() {
+		double result=0;
+		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); ){
+			i.advance();
 			result+=i.value();
 		}
-		return result;*/
-		return valueSum;
+		return result;
+		//return valueSum;
 	}
 
 	public void terminate() {
 		terminate.set(true);
 	}
 
+	/*
 	public TIntDoubleHashMap exchangeLeftAccValues() {
-		return exchangeAcc(true);
+		return exchangeAccLeft(true);
 	}
 
 	
 	public TIntDoubleHashMap exchangeRightAccValues() {
 		return exchangeAcc(false);
 	}
-
+*/
 	private void addAcc(int y, double value, int numIter, boolean left){
 		TIntDoubleHashMap acc;
 		if(left){
@@ -365,8 +497,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		this.exchangeRight=right;
 	}
 
+	synchronized public double getOldValueSum(){
+		return oldValueSum;
+	}
 	
-	public void setValueSum(double sum) {
+	synchronized public void setValueSum(double sum) {
+		this.oldValueSum=this.getValueSum();
 		this.valueSum=sum;
 	}
 
