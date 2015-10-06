@@ -7,39 +7,84 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Observable;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimpleColumnWorker extends Observable implements Runnable{
 
+	/**
+	 * A hash map (row -> dobule) containing all node values of the column the thread is working at.
+	 */
 	private TIntDoubleHashMap vertex=new TIntDoubleHashMap();
+	
+	/**
+	 * A second hash map to compare the old with the new value considering global convergence.
+	 */
+	private TIntDoubleHashMap oldVertex=new TIntDoubleHashMap();
+	
+	/**
+	 * The accumulator lists. For each neighbor one list.
+	 */
 	private TIntDoubleHashMap leftAcc=new TIntDoubleHashMap();
 	private TIntDoubleHashMap rightAcc=new TIntDoubleHashMap();
+	
+	/**
+	 * The exchanger to exchange the accumulator lists between two adjacent threads/colum worker.
+	 */
 	private Exchanger<TIntDoubleHashMap> exchangeLeft;
 	private Exchanger<TIntDoubleHashMap> exchangeRight;
-	private double valueSum;
-	private int columnIndex;
-	private TDoubleArrayList edges = new TDoubleArrayList();
-
-	private GraphInfo info;
 	
+	/**
+	 * The sum of all node values within the same column. Again two fields in order to check global convergence.
+	 */
+	private double oldValueSum;
+	private double valueSum;
+	
+	/**
+	 * The column's index.
+	 */
+	private int columnIndex;
+	
+	/**
+	 * The propagation rates of one column.
+	 */
+	private TDoubleArrayList edges = new TDoubleArrayList();
+	
+	/**
+	 * The total amount if local iterations.
+	 */
 	private int totalIterCounter=0;
+	
+	/**
+	 * The current amount of iterations concerning the left/right accumulators.
+	 */
 	private int leftIterCounter=0;
 	private int rightIterCounter=0;
 	
+	/**
+	 * The amount of iterations that have to be made before exchanging with the right/left neighbor.
+	 */
 	private int numLeft=100;
 	private int numRight=100;
 	
+	/**
+	 * An concurrently safe bool flag that is used to terminate the thread when global convergence is detected by the observer.
+	 */
 	private AtomicBoolean terminate=new AtomicBoolean(false);
 	private double oldValueSum;
 
-	
-	public SimpleColumnWorker(int column, GraphInfo ginfo, GlobalObserver o,
-			Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
+	/**
+	 * The column worker constructor. One instance is representing a thread that calculates the node values of one single column.
+	 * 
+	 * @param column - The thread's column index.
+	 * @param el	- The thread's left exchanger.
+	 * @param er	- The threas's right exchanger.
+	 */
+	public SimpleColumnWorker(int column, Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {
 		columnIndex=column;
-		info=ginfo;
-		for (int i = 0; i < ginfo.height * 4; i++) {
+		
+		// Calculating the propagation rates of each node, given the @GraphInfo information.
+		for (int i = 0; i < NPOsmose.ginfo.height * 4; i++) {
 			Neighbor n = Neighbor.Left;
 			switch (i % 4) {
 			case 0:
@@ -55,35 +100,55 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				n = Neighbor.Bottom;
 				break;
 			}
-			edges.add(ginfo.getRateForTarget(columnIndex, i / 4, n));
+			edges.add(NPOsmose.ginfo.getRateForTarget(columnIndex, i / 4, n));
 		}
-		addObserver(o);
- 		o.addWorker(this);
+		addObserver(NPOsmose.o);
+		NPOsmose.o.addWorker(this);
 		exchangeLeft = el;
 		exchangeRight = er;
 		
 	}
 
-	
+	/**
+	 * The column worker constructor. One instance is representing a thread that calculates the node values of one single column.
+	 * 
+	 * @param initialVertexValues	- The initial vertex values of the start node given by the @GraphInfo
+	 * @param column	- The thread's column index.
+	 * @param el	- The thread's left exchanger.
+	 * @param er	- The thread's right exchanger..
+	 */
 	public SimpleColumnWorker(HashMap<Integer, Double> initialVertexValues,
-			int column, GraphInfo ginfo, GlobalObserver o,
-			Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {		
+			int column, Exchanger<TIntDoubleHashMap> el, Exchanger<TIntDoubleHashMap> er) {		
 		
-		this(column, ginfo, o, el, er);
+		this(column, el, er);
 		for (Entry<Integer, Double> e : initialVertexValues.entrySet()) {
 			vertex.put(e.getKey(), e.getValue());
 		}
 	}
 
-	public SimpleColumnWorker(TIntDoubleHashMap initialVertexValues, int column,
-			GraphInfo ginfo, GlobalObserver o, Exchanger<TIntDoubleHashMap> el,
+	/**
+	 * The column worker constructor. One instance is representing a thread that calculates the node values of one single column.
+	 * 
+	 * @param initialVertexValues	- The initial vertex values of the start node given by the @GraphInfo
+	 * @param column	- The thread's column index.
+	 * @param el	- The thread's left exchanger.
+	 * @param er	- The thread's right exchanger..
+	 */
+	public SimpleColumnWorker(TIntDoubleHashMap initialVertexValues, int column, Exchanger<TIntDoubleHashMap> el,
 			Exchanger<TIntDoubleHashMap> er) {
 		
-		this(column, ginfo, o, el, er);
+		this(column, el, er);
 		vertex=initialVertexValues;
 		
 	}
 	
+	/**
+	 * Gets the propagation rate of one node to a specific direction.
+	 * 
+	 * @param y	- The row of the node.
+	 * @param dir - The direction to propagate at.
+	 * @return
+	 */
 	private double getEdge(int y, Neighbor dir){
 		switch(dir){
 		case Left:
@@ -99,28 +164,37 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		}
 	}
 
+	/**
+	 * The main method of the column worker. While not terminated or interrupted by the observer the column worker/thread iterates
+	 * over its nodes and propagates the values to its neighbors.
+	 */
 	public void run() {
- 		synchronized(NPOsmose.class){NPOsmose.o.addThread(Thread.currentThread());}
+
+		NPOsmose.o.addThread(Thread.currentThread());
 		TIntDoubleHashMap gotLeft=null;
 		TIntDoubleHashMap gotRight=null;
-		while (!shouldTerminate() && !Thread.currentThread().isInterrupted() && totalIterCounter != Integer.MAX_VALUE) {
-			/*if (totalIterCounter % 10000000 == 0) {
-				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
-				ImageConvertible graph = new ImageConvertibleImpl();
-				NPOsmose.ginfo.write2File("./test.txt", graph);
-				System.out.println("new pic");
-			}*/
+		while (!shouldTerminate() && !Thread.interrupted() && totalIterCounter != Integer.MAX_VALUE) {
+			if (totalIterCounter % 500000 == 0) {
+ 				synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
+ 				ImageConvertible graph = new ImageConvertibleImpl();
+ 				NPOsmose.ginfo.write2File("./test.txt", graph);
+ 				System.out.println(this.columnIndex+": new tmpResult");
+			}
 			double sum=0;
 			TIntDoubleHashMap tmpMap=new TIntDoubleHashMap();
+			
+			// Iterate over all nodes within the column.
 			for(TIntDoubleIterator iter=vertex.iterator(); iter.hasNext(); ){
 				iter.advance();
 				sum+=iter.value();
+				// Propagated left in previous iteration?
 				if(gotLeft!=null && !gotLeft.isEmpty()){
 					if(gotLeft.containsKey(iter.key())){
 						iter.setValue((iter.value()+gotLeft.get(iter.key())));
 						gotLeft.remove(iter.key());
 					}
 				}
+				// Propagated right in previous iteration?
 				if(gotRight!=null && !gotRight.isEmpty()){
 					if(gotRight.containsKey(iter.key())){
 						iter.setValue((iter.value()+gotRight.get(iter.key())));
@@ -128,31 +202,41 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					}
 				}
 				
+				// Calculating propagation values.
 				double propagateTop=iter.value()*getEdge(iter.key(), Neighbor.Top);
 				double propagateBottom=iter.value()*getEdge(iter.key(), Neighbor.Bottom);
 				double propagateLeft=iter.value()*getEdge(iter.key(), Neighbor.Left);
 				double propagateRight=iter.value()*getEdge(iter.key(), Neighbor.Right);
 				
-				double newValue = iter.value() - propagateTop - propagateBottom - propagateLeft - propagateRight;
-				tmpMap.adjustOrPutValue(iter.key(), newValue, newValue);
+
+				// Update own value.
+				tmpMap.adjustOrPutValue(iter.key(),iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight,iter.value()-propagateTop-propagateBottom-propagateLeft-propagateRight);
 				
+				// Set accumulators left.
 				if(columnIndex>0){
 					addLeftAcc(iter.key(), propagateLeft, totalIterCounter);
 				}
-				if(columnIndex!=info.width-1){
+				// Set accumulators right.
+				if(columnIndex!=NPOsmose.ginfo.width-1){
 					addRightAcc(iter.key(), propagateRight, totalIterCounter);
 				}
+				
+				// Propagate to vertical neighbors.
 				if(propagateTop!=0 && iter.key()!=0){
 					tmpMap.adjustOrPutValue(iter.key()-1, propagateTop, propagateTop);
 				}
-				if(propagateBottom!=0 && iter.key()!=info.height-1){
+				if(propagateBottom!=0 && iter.key()!=NPOsmose.ginfo.height-1){
 					tmpMap.adjustOrPutValue(iter.key()+1, propagateBottom, propagateBottom);
 				}
 			}
-			vertex=tmpMap;
+			// Iteration finished. Update vertexValues.
+			setVertex(tmpMap);
+			
 			rightIterCounter++;
 			leftIterCounter++;
-			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.currentThread().isInterrupted()){
+
+			// Check if horizontal iteration is necessary. If yes, do so.
+			if(leftIterCounter==numLeft && !shouldTerminate() && !Thread.interrupted()){
 				gotLeft=exchangeLeftAccValues();
 				leftIterCounter=0;
 				leftAcc=new TIntDoubleHashMap();
@@ -162,37 +246,37 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 				rightIterCounter=0;
 				rightAcc=new TIntDoubleHashMap();
 			}
+			
 			totalIterCounter++;
-			//System.out.println(NPOsmose.total);
+
+			// Update value some.
 			setValueSum(sum);
 			
 		}
-		synchronized(NPOsmose.class){NPOsmose.result.put(getColumnIndex(), getVertexValues());}
-
+		// Read out the calculated vertex values of the processed column before terminating.
+		synchronized (NPOsmose.class) { NPOsmose.result.put(getColumnIndex(), getVertexValues()); }
 
 	}
 	
-
+	/**
+	 * Exchange the accumulator to the given neighbor.
+	 * 
+	 * @param left	- The given neighbor to exchange with.
+	 * @return	- The received values from the neighbor. If it's empty, the neighbor did not propagate anything.
+	 */
 	private TIntDoubleHashMap exchangeAcc(boolean left){
 
 		Exchanger<TIntDoubleHashMap> ex;
 		TIntDoubleHashMap acc;
-		int num;
 		if(left){
 			ex=exchangeLeft;
 			acc=leftAcc;
-			num=numLeft;
 		}else{
 			ex=exchangeRight;
 			acc=rightAcc;
-			num=numRight;
 		}
 		if(ex==null){
 			if(acc!=null && !acc.isEmpty()){
-				for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
-					iter.advance();
-					iter.setValue(iter.value()/num);
-				}
 				ex=new Exchanger<TIntDoubleHashMap>();
 				Runnable r;
 				if(left){
@@ -200,15 +284,13 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					acc=new TIntDoubleHashMap();
-					r = new SimpleColumnWorker(accCopy, columnIndex-1,
-							NPOsmose.ginfo, NPOsmose.o, null, ex);
+					r = new SimpleColumnWorker(accCopy, columnIndex-1, null, ex);
 				}else{
 					this.exchangeRight=ex;
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					acc=new TIntDoubleHashMap();
-					r = new SimpleColumnWorker(accCopy, columnIndex+1,
-							NPOsmose.ginfo, NPOsmose.o, ex, null);
+					r = new SimpleColumnWorker(accCopy, columnIndex+1, ex, null);
 				}
 				new Thread(r).start();
 				return new TIntDoubleHashMap();
@@ -221,10 +303,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			}
 		}else{
 				try {
-					for(TIntDoubleIterator iter=acc.iterator(); iter.hasNext();){
-						iter.advance();
-						iter.setValue(iter.value()/num);
-					}
 					TIntDoubleHashMap accCopy=new TIntDoubleHashMap();
 					accCopy.putAll(acc);
 					if(shouldTerminate() || Thread.interrupted()){
@@ -236,8 +314,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return got;
 					}
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					//e.printStackTrace();
 					return new TIntDoubleHashMap();
 				}
 		}
@@ -247,6 +323,14 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		
 	}
 	
+	/**
+	 * The new amount of iterations which have to be made before the next horizontal propagation.
+	 * Returns 1 if the thread assums local convergence, >1 otherwise.
+	 * 
+	 * @param own
+	 * @param other
+	 * @param left
+	 */
 	private void calculateIter(TIntDoubleHashMap own, TIntDoubleHashMap other, boolean left){
 		double result=0;
 		for(TIntDoubleIterator iter=own.iterator(); iter.hasNext();){
@@ -268,13 +352,12 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return;
 					}
 					setChanged();
-					notifyObservers();
+					notifyObservers(columnIndex);
 				}
 				return;
 			}
-			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
-			//if(columnIndex==1 || columnIndex==2)
-			//	System.out.println("Thread "+columnIndex+": numLeft="+numLeft);
+
+			numLeft=(int) Math.min(Math.floor(result / NPOsmose.epsilon*10), 100);
 		}else{
 			result = Math.abs(result);
 			if (result <= NPOsmose.epsilon) {
@@ -286,26 +369,22 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 						return;
 					}
 					setChanged();
-					notifyObservers();
+					notifyObservers(columnIndex);
 				}
 				return;
 			}
-			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon), 100);
-			//if(columnIndex==1 || columnIndex==2)
-			//	System.out.println("Thread "+columnIndex+": numRight="+numRight);
+
+			numRight=(int) Math.min(Math.floor(result / NPOsmose.epsilon*10), 100);
 		}
 	}
 	
-	synchronized public double getValueSum() {
-		double result=0;
-		for(TIntDoubleIterator i=vertex.iterator(); i.hasNext(); ){
-			i.advance();
-			result+=i.value();
-		}
-		return result;
-		//return valueSum;
+	public double getValueSum() {
+		return valueSum;
 	}
 
+	/**
+	 * Terminates the thread.
+	 */
 	public void terminate() {
 		terminate.set(true);
 	}
@@ -314,11 +393,17 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		return exchangeAcc(true);
 	}
 
-	
 	public TIntDoubleHashMap exchangeRightAccValues() {
 		return exchangeAcc(false);
 	}
 
+	/**
+	 * Put the propagation value to the accumulator list.
+	 * @param y	- The row index of the node.
+	 * @param value	- The propagation value.
+	 * @param numIter
+	 * @param left	- The neighbor to propagate to.
+	 */
 	private void addAcc(int y, double value, int numIter, boolean left){
 		TIntDoubleHashMap acc;
 		if(left){
@@ -327,7 +412,6 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 			acc=rightAcc;
 		}
 		if(acc.containsKey(y)){
-			//TODO:
 			acc.put(y, acc.get(y)+value);
 		}else{
 			if(value!=0){
@@ -349,7 +433,11 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 
 	
 	public TIntDoubleHashMap getVertexValues() {
-		return vertex;
+		return new TIntDoubleHashMap(vertex);
+	}
+
+	public TIntDoubleHashMap getOldVertexValues() {
+		return new TIntDoubleHashMap(oldVertex);
 	}
 
 	
@@ -357,45 +445,31 @@ public class SimpleColumnWorker extends Observable implements Runnable{
 		return columnIndex;
 	}
 
-	
-	public TIntDoubleHashMap getLeftAccValues() {
-		return leftAcc;
-	}
-
-	
-	public TIntDoubleHashMap getRightAccValues() {
-		return rightAcc;
-	}
-
-	
 	public boolean shouldTerminate() {
 		return terminate.get();
 	}
-
-	
-	public void setLeftExchanger(Exchanger<TIntDoubleHashMap> left) {
-		this.exchangeLeft=left;
-
-	}
-
-	
-	public void setRightExchanger(Exchanger<TIntDoubleHashMap> right) {
-		this.exchangeRight=right;
-	}
-
-	synchronized public double getOldValueSum(){
-		return oldValueSum;
-	}
 	
 	synchronized public void setValueSum(double sum) {
-		this.oldValueSum=this.getValueSum();
+		this.oldValueSum=valueSum;
 		this.valueSum=sum;
 	}
+	
+	public double getOldValueSum(){
+		return oldValueSum;
+	}
+
+
 	public int getNumLeft(){
 		return numLeft;
 	}
 	public int getNumRight(){
 		return numRight;
 	}
+	
+	private void setVertex(TIntDoubleHashMap v) {
+		oldVertex = vertex;
+		vertex = v;
+	}
+
 
 }

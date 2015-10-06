@@ -1,47 +1,37 @@
+
 package np2015;
 
-import java.util.HashMap;
+import gnu.trove.iterator.TIntDoubleIterator;
 import java.util.LinkedList;
-import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Set;
-import java.util.concurrent.CyclicBarrier;
 
 /**
  * Observing all running threads according to convergence.
- * 
- * @author Mo
  */
 public class GlobalObserver implements Observer {
 
-	
+	/**
+	 * Are all threads terminated/terminating?
+	 */
 	private boolean allTerminated=false;
 	
 	/**
-	 * The counter which represents the threads which already assume local convergence.
+	 * A list of all active threads/column workers.
 	 */
-	private int alreadyFinished = 0;
-
-	/**
-	 * Mapping from worker to pair of two double values representing old and
-	 * current valueSum of one worker.
-	 */
-	private HashMap<SimpleColumnWorker, Boolean> workers = new HashMap<SimpleColumnWorker, Boolean>();
-	//private HashMap<SimpleColumnWorker, Double> workersOld = new HashMap<SimpleColumnWorker, Double>();
-
+	private LinkedList<SimpleColumnWorker> workers = new LinkedList<SimpleColumnWorker>();
 	
 	public GlobalObserver() {
 		super();
 	}
 	
 	/**
-	 * To be called by every column worker once.
+	 * To be called by every column worker once. Adds the column worker to the active worker list.
 	 * 
-	 * @param worker
+	 * @param worker	- The thread which has just started working.
 	 */
 	public synchronized void addWorker(SimpleColumnWorker worker) {
-		workers.put(worker, false);
+		workers.add(worker);
 		NPOsmose.incrementWorkersActive();
 	}
 
@@ -50,65 +40,68 @@ public class GlobalObserver implements Observer {
 	 */
 	@Override
 	public synchronized void update(Observable o, Object arg) {
-		if(Thread.currentThread().isInterrupted()){
+		if(Thread.interrupted()){
 			return;
 		}
-		SimpleColumnWorker scw=((SimpleColumnWorker)o);
-		if (!workers.containsKey(scw)) {
-			throw new UnsupportedOperationException();
-		}else{
-			workers.put(scw, true);
-		}
 		boolean b=true;
-		for(Entry<SimpleColumnWorker, Boolean> e: workers.entrySet()){
-			if(e.getValue()==false){
-				System.out.println(e.getKey().getColumnIndex()+" : numLeft -"+e.getKey().getNumLeft()+" ; numRight - "+e.getKey().getNumRight());
+		for(SimpleColumnWorker w : workers){
+			if(w.getNumLeft()!=1 || w.getNumRight()!=1){
 				b=false;
 			}
 		}
 		if (b) {
-			System.out.println(b);
-			// all threads have converged locally
-			Set<SimpleColumnWorker> l = workers.keySet();
-			//if (checkGlobalConvergence(l)) {
-				// terminate threads
-				for (SimpleColumnWorker columnWorker : l) {
-					columnWorker.terminate();
-					
-					
+			// Have all threads converged locally?
+			if (checkGlobalConvergence(workers)) {
+				boolean ter = false;
+				for (SimpleColumnWorker w : workers) {
+					for(TIntDoubleIterator iter = w.getOldVertexValues().iterator(); iter.hasNext();) {
+						iter.advance();
+						
+						if (Math.abs(iter.value() - w.getVertexValues().get(iter.key())) > NPOsmose.epsilon) {
+							ter = true;
+						}
+						
+					}
 				}
-				for(Thread t: NPOsmose.threads){
-					t.interrupt();
+				if (ter) {
+					return;
+				}	
+				// Terminate threads
+				for (SimpleColumnWorker columnWorker : workers) {
+					columnWorker.terminate();	
+				}
+				// Has to be done because some thread might be still waiting for horizontal exchange.
+				synchronized (NPOsmose.class) {
+					for(Thread t: NPOsmose.threads){
+						t.interrupt();
+					}
 				}
 				
+				
 				allTerminated=true;
-				//System.out.println("All terminated");
 				NPOsmose.lock.lock();
+				// Signal main thread.
 				NPOsmose.condition.signal();
 				NPOsmose.lock.unlock();
-
-			//}
+			}
 		}
 
 	}
 
-	private boolean checkGlobalConvergence(Set<SimpleColumnWorker> l) {
+	/**
+	 * // Check for global convergence comparing old with new value sum of one and the same column.
+	 * @param The list of all active column workers.
+	 * @return	- Returns true, if all threads have converged locally.
+	 */
+	private boolean checkGlobalConvergence(LinkedList<SimpleColumnWorker> l) {
 		// Compare old with current value considering epsilon.
 		for (SimpleColumnWorker columnWorker : l) {
-			System.out.println(Math.abs(workersOld.get(columnWorker) - columnWorker.getValueSum())+" > "+NPOsmose.epsilon);
-			if (Math.abs(workersOld.get(columnWorker) - columnWorker.getValueSum()) > NPOsmose.epsilon) {
+			double oldValue = columnWorker.getOldValueSum();
+			if (Math.abs(oldValue - columnWorker.getValueSum()) > NPOsmose.epsilon) {
 				return false;
 			}
 		}
 		return true;
-	}
-
-	private synchronized void increment() {
-		alreadyFinished++;
-	}
-
-	public synchronized Set<SimpleColumnWorker> getWorkers() {
-		return workers.keySet();
 	}
 
 	public synchronized boolean allTerminated(){
