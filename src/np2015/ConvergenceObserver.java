@@ -2,14 +2,10 @@ package np2015;
 
 import gnu.trove.list.array.TIntArrayList;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Observing all running threads according to convergence.
@@ -58,8 +54,8 @@ public class ConvergenceObserver implements Observer {
 	/**
 	 * Checks global convergence.
 	 */
-	private void checkConvergence() {
-		if(globalConvergent()){
+	synchronized private void checkConvergence() {
+		if(globalConvergent() && !allTerminated()){
 			for(DoubleColumnWorker w:workers){
 				NPOsmose.result.put(w.getColumnIndex(), w.getVertexValues());
 			}

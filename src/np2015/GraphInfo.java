@@ -25,7 +25,7 @@ public class GraphInfo implements GuardedCommand {
 		this.epsilon = epsilon;
 		this.maxOutflow = maxOutflow;
 	}
-		
+
 	public void addInitialEntry(int row, int column, double value) {
 		HashMap<Integer, Double> tmp =  column2row2initialValue.getOrDefault(row, new HashMap<>());
 		tmp.put(column, value);
