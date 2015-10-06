@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -29,7 +30,7 @@ public class ConvergenceObserver implements Observer {
 	/**
 	 * Are all threads terminated/terminating yet?
 	 */
-	private boolean allTerm=false;;
+	private AtomicBoolean allTerm=new AtomicBoolean(false);
 	
 	
 	/**
@@ -69,7 +70,7 @@ public class ConvergenceObserver implements Observer {
 				}
 			}
 
-			allTerm=true;
+			allTerm.set(true);
 			try{
 				NPOsmose.lock.lock();
 				NPOsmose.condition.signal();
@@ -80,7 +81,7 @@ public class ConvergenceObserver implements Observer {
 	}
 
 	public boolean allTerminated(){
-		return allTerm;
+		return allTerm.get();
 	}
 	
 	/**
