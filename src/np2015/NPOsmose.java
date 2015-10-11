@@ -25,7 +25,7 @@ public class NPOsmose {
 	public static final  Lock lock = new ReentrantLock();
 	public static final Condition condition = lock.newCondition();
 	public static final LinkedList<Thread> threads=new LinkedList<Thread>();
-	private static String fileName;
+	private static String fileName="./result.txt";
 	
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
@@ -35,7 +35,6 @@ public class NPOsmose {
 		// read data in
 		if (args.length != 0) {
 			Path path = Paths.get(args[0]);
-			fileName=path.getFileName().toString();
 			try {
 				json = new String(Files.readAllBytes(path));
 			} catch (IOException e) {
@@ -74,7 +73,7 @@ public class NPOsmose {
 		// Read out the calculated values.
 		ImageConvertible graph = new ImageConvertibleImpl();
 		// Write them into the file.
-		ginfo.write2File("/home/stud/nikden/nptestoutput/"+fileName, graph);
+		ginfo.write2File(fileName, graph);
 		
 		// Stopwatch.
 		long stopTime=System.currentTimeMillis();
