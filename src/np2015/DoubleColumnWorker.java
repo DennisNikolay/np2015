@@ -251,7 +251,7 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 	 * over its nodes and propagates the values to its neighbors.
 	 */
 	@Override
-	public void run() {
+	synchronized public void run() {
 		synchronized(NPOsmose.class){NPOsmose.threads.add(Thread.currentThread());}
 		while(!Thread.currentThread().isInterrupted()){
 			
