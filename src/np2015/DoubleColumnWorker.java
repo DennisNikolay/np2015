@@ -14,11 +14,15 @@ import gnu.trove.procedure.TIntDoubleProcedure;
 public class DoubleColumnWorker extends Observable implements TIntDoubleProcedure, Runnable{
 	/**
 	 * A hash map (row -> dobule) containing all node values of the column the thread is working at.
+	 * Only the instance of "DoubleColumnWorker" (thread)
+	 * itself operates on this field. Therefore, no data race will occur.
 	 */
 	private TIntDoubleHashMap vertex=new TIntDoubleHashMap();
 	
 	/**
 	 * The accumulator lists. For each neighbor one list.
+	 * Only the instance of "DoubleColumnWorker" (thread)
+	 * itself operates on this field. Therefore, no data race will occur.
 	 */
 	private TIntDoubleHashMap leftAcc=new TIntDoubleHashMap();
 	private TIntDoubleHashMap rightAcc=new TIntDoubleHashMap();
@@ -32,6 +36,8 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 	
 	/**
 	 * Contains the local propagations.
+	 * Only the instance of "DoubleColumnWorker" (thread)
+	 * itself operates on this field. Therefore, no data race will occur.
 	 */
 	private TIntDoubleHashMap add=new TIntDoubleHashMap();
 	
@@ -64,6 +70,8 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 	
 	/**
 	 * The sum of all node values within the same column. Three different versions in order to check global convergence.
+	 * Only the instance of "DoubleColumnWorker" (thread)
+	 * itself operates on this field. Therefore, no data race will occur.
 	 */
 	private double tmpSum=0;
 	private double valueSum=0;
