@@ -13,7 +13,7 @@ import gnu.trove.procedure.TIntDoubleProcedure;
 
 public class DoubleColumnWorker extends Observable implements TIntDoubleProcedure, Runnable{
 	/**
-	 * A hash map (row -> dobule) containing all node values of the column the thread is working at.
+	 * A hash map (row -> double) containing all node values of the column the thread is working at.
 	 * Only the instance of "DoubleColumnWorker" (thread)
 	 * itself operates on this field. Therefore, no data race will occur.
 	 */
