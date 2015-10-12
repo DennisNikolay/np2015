@@ -10,7 +10,11 @@ import gnu.trove.map.hash.TIntDoubleHashMap;
 import gnu.trove.procedure.TIntDoubleProcedure;
 
 
-
+/**
+ * Runnable that implements the main logic of the program for each column.
+ * One instance of this class is only allowed to be run by a single thread.
+ *
+ */
 public class DoubleColumnWorker extends Observable implements TIntDoubleProcedure, Runnable{
 	/**
 	 * A hash map (row -> double) containing all node values of the column the thread is working at.
@@ -259,7 +263,7 @@ public class DoubleColumnWorker extends Observable implements TIntDoubleProcedur
 	 * over its nodes and propagates the values to its neighbors.
 	 */
 	@Override
-	synchronized public void run() {
+	public void run() {
 		synchronized(NPOsmose.class){NPOsmose.threads.add(Thread.currentThread());}
 		while(!Thread.currentThread().isInterrupted()){
 			
